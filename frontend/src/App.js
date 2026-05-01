@@ -1,8 +1,5 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { supabase } from './db/supabaseClient'; // Our new connection!
-
-// Your existing imports
 import HomePage from './pages/HomePage';
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
@@ -34,22 +31,6 @@ function PlaceholderPage({ title }) {
 }
 
 function App() {
-  // --- OUR BACKGROUND DATABASE TEST ---
-  useEffect(() => {
-    const testConnection = async () => {
-      console.log("Testing connection to matchPal database...");
-      const { data, error } = await supabase.from('profiles').select('*');
-      
-      if (error) {
-        console.error("❌ Connection Failed:", error.message);
-      } else {
-        console.log("✅ Connection Successful! Database is talking to React.");
-      }
-    };
-    testConnection();
-  }, []);
-  // ------------------------------------
-
   return (
     <Router>
       <Routes>
