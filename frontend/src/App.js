@@ -5,6 +5,16 @@ import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
 import UserDashboard from './pages/userdashboard';
 import AdminDashboard from './pages/adminDashboard';
+import SearchRoomMates from './pages/searchRoomMates';
+import SuggestedMatches from './pages/suggestedMatches';
+import MatchRequest from './pages/matchRequest';
+import ViewProfile from './pages/viewProfile';
+import Messages from './pages/messages';
+import ChatScreen from './pages/chatScreen';
+import Notification from './pages/notification';
+import LifePreferences from './pages/lifePreferences';
+import EditProfile from './pages/editProfile';
+import ReportBlock from './pages/reportBlock';
 
 function PlaceholderPage({ title }) {
   return (
@@ -29,15 +39,16 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/user-dashboard" element={<UserDashboard />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
-        <Route path="/view-profile" element={<PlaceholderPage title="View Profile" />} />
-        <Route path="/edit-profile" element={<PlaceholderPage title="Edit Profile" />} />
-        <Route path="/preferences" element={<PlaceholderPage title="Preferences" />} />
-        <Route path="/search-roommates" element={<PlaceholderPage title="Search Roommates" />} />
-        <Route path="/suggested-matches" element={<PlaceholderPage title="Suggested Matches" />} />
-        <Route path="/match-requests" element={<PlaceholderPage title="Match Requests" />} />
-        <Route path="/messages" element={<PlaceholderPage title="Messages" />} />
-        <Route path="/notifications" element={<PlaceholderPage title="Notifications" />} />
-        <Route path="/report-block" element={<PlaceholderPage title="Report / Block" />} />
+        <Route path="/view-profile" element={<ViewProfile />} />
+        <Route path="/edit-profile" element={<EditProfile />} />
+        <Route path="/preferences" element={<LifePreferences />} />
+        <Route path="/search-roommates" element={<SearchRoomMates />} />
+        <Route path="/suggested-matches" element={<SuggestedMatches />} />
+        <Route path="/match-requests" element={<MatchRequest />} />
+        <Route path="/messages" element={<Messages />} />
+        <Route path="/chat-screen" element={<ChatScreen />} />
+        <Route path="/notifications" element={<Notification />} />
+        <Route path="/report-block" element={<ReportBlock />} />
         <Route path="/admin/user-management" element={<PlaceholderPage title="Admin • User Management" />} />
         <Route path="/admin/reports" element={<PlaceholderPage title="Admin • Reports" />} />
         <Route path="/admin/moderation" element={<PlaceholderPage title="Admin • Moderation" />} />
