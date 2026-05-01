@@ -1,99 +1,85 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logoIcon from "../assets/logo-mark.svg";
+import { authService } from "../db/AuthService";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({ name: "", email: "", password: "", userType: "" });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const { user, error } = await authService.register(formData.email, formData.password, {
+        full_name: formData.name,
+        user_type: formData.userType
+      });
+      
+      if (error) throw error;
+      alert("Registration successful! Please check your email for verification.");
+      navigate("/login");
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div
-      className="min-h-screen bg-[#f9f9ff] px-3 py-5"
-      style={{ maxWidth: "390px", margin: "0 auto", minHeight: "100vh" }}
-    >
-      <div className="mx-auto w-full max-w-[390px] rounded-3xl bg-white p-6 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.2)]">
-        <div className="mb-8 flex items-center gap-3">
-          <img src={logoIcon} alt="MatchPal logo" className="h-5 w-5" style={{ width: "40px", height: "40px" }} />
-          <span className="text-lg font-semibold text-[#181c23]">MatchPal</span>
+    <div className="min-h-screen bg-[#f9f9ff] flex items-center justify-center p-4">
+      <div className="w-full max-w-[390px] rounded-3xl bg-white p-6 shadow-2xl">
+        <div className="mb-6 flex items-center gap-3">
+          <img src={logoIcon} alt="MatchPal logo" className="h-10 w-10" />
+          <span className="text-xl font-bold text-[#181c23]">MatchPal</span>
         </div>
 
         <h1 className="text-3xl font-semibold text-[#181c23]">Create Account</h1>
-        <p className="mt-2 text-sm text-[#596171]">Start finding your best match in minutes.</p>
+        <p className="mt-2 text-sm text-[#596171]">Find your best match in minutes.</p>
 
-        <form className="mt-8 space-y-5">
-          <div>
-            <label htmlFor="name" className="mb-2 block text-sm font-medium text-[#181c23]">
-              Name
-            </label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              placeholder="Your full name"
-              className="h-12 w-full rounded-xl border border-[#d9ddea] px-4 text-sm text-[#181c23] outline-none transition focus:border-[#0058bc] focus:ring-2 focus:ring-[#0058bc]/15"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="email" className="mb-2 block text-sm font-medium text-[#181c23]">
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="you@example.com"
-              className="h-12 w-full rounded-xl border border-[#d9ddea] px-4 text-sm text-[#181c23] outline-none transition focus:border-[#0058bc] focus:ring-2 focus:ring-[#0058bc]/15"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="mb-2 block text-sm font-medium text-[#181c23]">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Create a strong password"
-              className="h-12 w-full rounded-xl border border-[#d9ddea] px-4 text-sm text-[#181c23] outline-none transition focus:border-[#0058bc] focus:ring-2 focus:ring-[#0058bc]/15"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="userType" className="mb-2 block text-sm font-medium text-[#181c23]">
-              User Type
-            </label>
-            <select
-              id="userType"
-              name="userType"
-              defaultValue=""
-              className="h-12 w-full rounded-xl border border-[#d9ddea] bg-white px-4 text-sm text-[#181c23] outline-none transition focus:border-[#0058bc] focus:ring-2 focus:ring-[#0058bc]/15"
-            >
-              <option value="" disabled>
-                Select user type
-              </option>
-              <option value="student">Student</option>
-              <option value="professional">Professional</option>
-            </select>
-          </div>
+        <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+          <input
+            required
+            placeholder="Full Name"
+            className="h-12 w-full rounded-xl border border-[#d9ddea] px-4 outline-none focus:border-[#0058bc]"
+            onChange={(e) => setFormData({...formData, name: e.target.value})}
+          />
+          <input
+            required
+            type="email"
+            placeholder="you@example.com"
+            className="h-12 w-full rounded-xl border border-[#d9ddea] px-4 outline-none focus:border-[#0058bc]"
+            onChange={(e) => setFormData({...formData, email: e.target.value})}
+          />
+          <input
+            required
+            type="password"
+            placeholder="Password"
+            className="h-12 w-full rounded-xl border border-[#d9ddea] px-4 outline-none focus:border-[#0058bc]"
+            onChange={(e) => setFormData({...formData, password: e.target.value})}
+          />
+          <select
+            required
+            className="h-12 w-full rounded-xl border border-[#d9ddea] bg-white px-4 outline-none"
+            onChange={(e) => setFormData({...formData, userType: e.target.value})}
+          >
+            <option value="">Select User Type</option>
+            <option value="student">Student</option>
+            <option value="professional">Professional</option>
+          </select>
 
           <button
             type="submit"
-            className="mt-2 h-12 w-full rounded-xl bg-[#0058bc] text-base font-semibold text-white shadow-[0_10px_15px_-3px_rgba(0,88,188,0.15)]"
+            disabled={loading}
+            className="mt-2 h-12 w-full rounded-xl bg-[#0058bc] font-bold text-white shadow-lg disabled:opacity-50"
           >
-            Register
+            {loading ? "Creating..." : "Register"}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-[#596171]">
-          Already have an account?{" "}
-          <button
-            type="button"
-            onClick={() => navigate("/login")}
-            className="font-semibold text-[#0058bc] underline-offset-2 hover:underline"
-          >
-            Login
-          </button>
+          Have an account? <button onClick={() => navigate("/login")} className="font-bold text-[#0058bc]">Login</button>
         </p>
       </div>
     </div>
