@@ -1,3 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 /* Import the fonts required for the design */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400&family=Nunito:wght@400&display=swap");
 
