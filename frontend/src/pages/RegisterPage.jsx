@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logoIcon from "../assets/logo-mark.svg";
-import { authService } from "../db/AuthService";
+import { supabase } from "../db/supabaseClient";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -14,8 +14,12 @@ export default function RegisterPage() {
     try {
       // All new accounts are standard app users (role: 'user'). Never pass an RBAC/admin role
       // or any role field to the auth backend from this screen — roles are assigned only via admin tooling / server policy.
-      await authService.signUp(formData.email, formData.password);
-      alert("Registration successful! Please check your email for verification.");
+      const { error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+      });
+      if (error) throw error;
+      alert("Registration successful! You can now login");
       navigate("/login");
     } catch (error) {
       console.error(error);

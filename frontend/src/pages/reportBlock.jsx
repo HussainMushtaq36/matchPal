@@ -14,6 +14,8 @@ export default function ReportBlock() {
   const [targetId, setTargetId] = useState("");
   const [reportState, setReportState] = useState("idle");
   const [blockState, setBlockState] = useState("idle");
+  const selectedTargetProfile = profiles.find((profile) => profile.id === targetId);
+  const isAdminTarget = selectedTargetProfile?.role === "admin";
 
   useEffect(() => {
     const loadProfiles = async () => {
@@ -36,7 +38,7 @@ export default function ReportBlock() {
   };
 
   const handleReport = async () => {
-    if (reportState !== "idle" || !targetId) return;
+    if (reportState !== "idle" || !targetId || isAdminTarget) return;
     setReportState("processing");
     try {
       const user = await authService.getCurrentUser();
@@ -47,6 +49,8 @@ export default function ReportBlock() {
         details,
       });
       markSuccess(setReportState);
+      alert("Action completed successfully");
+      navigate("/user-dashboard");
     } catch (error) {
       console.error(error);
       setReportState("idle");
@@ -54,7 +58,7 @@ export default function ReportBlock() {
   };
 
   const handleBlock = async () => {
-    if (blockState !== "idle" || !targetId) return;
+    if (blockState !== "idle" || !targetId || isAdminTarget) return;
     setBlockState("processing");
     try {
       const user = await authService.getCurrentUser();
@@ -63,6 +67,8 @@ export default function ReportBlock() {
         targetId,
       });
       markSuccess(setBlockState);
+      alert("Action completed successfully");
+      navigate("/user-dashboard");
     } catch (error) {
       console.error(error);
       setBlockState("idle");
@@ -128,7 +134,7 @@ export default function ReportBlock() {
         <div className="mt-8 grid grid-cols-2 gap-3">
           <button
             type="button"
-            disabled={!targetId || reportState === "processing" || blockState === "processing"}
+            disabled={!targetId || isAdminTarget || reportState === "processing" || blockState === "processing"}
             onClick={handleReport}
             className="w-full bg-[#0058bc] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-lg shadow-blue-200 disabled:opacity-70 disabled:cursor-not-allowed"
           >
@@ -141,7 +147,7 @@ export default function ReportBlock() {
           </button>
           <button
             type="button"
-            disabled={!targetId || reportState === "processing" || blockState === "processing"}
+            disabled={!targetId || isAdminTarget || reportState === "processing" || blockState === "processing"}
             onClick={handleBlock}
             className="w-full bg-[#e6e8f3] text-[#0058bc] py-4 rounded-2xl font-bold disabled:opacity-70 disabled:cursor-not-allowed"
           >
@@ -152,6 +158,11 @@ export default function ReportBlock() {
               : "Block User"}
           </button>
         </div>
+        {isAdminTarget ? (
+          <p className="mt-3 text-center text-sm font-semibold text-[#b91c1c]">
+            System administrators cannot be reported.
+          </p>
+        ) : null}
 
         <p className="mt-6 text-center text-[10px] font-bold text-[#b1b5c3] uppercase tracking-widest">
           Our moderation team reviews reports within 24 hours.

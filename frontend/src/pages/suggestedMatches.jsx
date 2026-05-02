@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Heart, MapPin } from "lucide-react";
 import { authService } from "../db/AuthService";
 import { matchService } from "../db/MatchService";
-import { profileService } from "../db/ProfileService";
+import { supabase } from "../db/supabaseClient";
 
 const wrapperStyle = {
   maxWidth: "390px",
@@ -23,8 +23,13 @@ export default function SuggestedMatches() {
     const load = async () => {
       try {
         const user = await authService.getCurrentUser();
-        const profiles = await profileService.getAllProfiles(user.id);
-        setUsers(profiles);
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .neq("id", user.id)
+          .neq("role", "admin");
+        if (error) throw error;
+        setUsers(data || []);
       } catch (error) {
         console.error(error);
       }

@@ -4,6 +4,7 @@ import { ArrowLeft, Search, MapPin, SlidersHorizontal, Heart } from "lucide-reac
 import { authService } from "../db/AuthService";
 import { profileService } from "../db/ProfileService";
 import { matchService } from "../db/MatchService";
+import { supabase } from "../db/supabaseClient";
 
 export default function SearchRoomMates() {
   const navigate = useNavigate();
@@ -17,7 +18,13 @@ export default function SearchRoomMates() {
     const load = async () => {
       try {
         const user = await authService.getCurrentUser();
-        const users = await profileService.getAllProfiles(user.id);
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .neq("id", user.id)
+          .neq("role", "admin");
+        if (error) throw error;
+        const users = data || [];
         const prefs = await profileService.getPreferencesByUserIds(users.map((u) => u.id));
         const mappedPrefs = prefs.reduce((acc, pref) => {
           acc[pref.user_id] = pref;

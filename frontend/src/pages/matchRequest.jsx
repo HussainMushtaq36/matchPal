@@ -49,6 +49,7 @@ export default function MatchRequest() {
     try {
       const user = await authService.getCurrentUser();
       await matchService.respondToRequest(row.id, row.sender_id, user.id, decision);
+      alert("Match request sent successfully!");
       setActionStateById((prev) => ({
         ...prev,
         [row.id]: decision === "accept" ? "accepted" : "rejected",
