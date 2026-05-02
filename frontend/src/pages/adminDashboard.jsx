@@ -45,9 +45,14 @@ export default function AdminDashboard() {
             </div>
             <span className="text-lg font-black tracking-tight text-[#181c23]">MatchPal</span>
           </div>
-          <div className="h-10 w-10 rounded-2xl bg-gray-200 overflow-hidden border-2 border-white shadow-sm">
-            <img src="https://i.pravatar.cc/100?img=3" alt="Admin" />
-          </div>
+          <button
+            type="button"
+            onClick={() => navigate("/admin/profile")}
+            className="h-10 w-10 shrink-0 rounded-2xl bg-gray-200 overflow-hidden border-2 border-white shadow-sm ring-offset-2 focus:outline-none focus:ring-2 focus:ring-[#0058bc]"
+            aria-label="Profile"
+          >
+            <img src="https://i.pravatar.cc/100?img=3" alt="" className="h-full w-full object-cover" />
+          </button>
         </header>
 
         <main className="px-6 pb-32">
@@ -65,7 +70,7 @@ export default function AdminDashboard() {
           {/* Core Actions Grid (Moderation Removed) */}
           <section className="mt-8 grid grid-cols-2 gap-4">
             <Tile title="Manage Students" icon={Users} onClick={() => navigate("/admin/user-management")} primary />
-            <Tile title="Active Reports" icon={AlertCircle} onClick={() => navigate("/admin/reports")} />
+            <Tile title="Reports" icon={AlertCircle} onClick={() => navigate("/admin/reports")} />
             <Tile title="System Logout" icon={LogOut} onClick={() => navigate("/")} />
           </section>
 

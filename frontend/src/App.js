@@ -15,6 +15,9 @@ import Notification from './pages/notification';
 import LifePreferences from './pages/lifePreferences';
 import EditProfile from './pages/editProfile';
 import ReportBlock from './pages/reportBlock';
+import ManageStudents from './pages/manage';
+import ReportsMonitoring from './pages/reportsMonitoring';
+import AdminViewProfile from './pages/adminviewProfile';
 
 function PlaceholderPage({ title }) {
   return (
@@ -49,10 +52,10 @@ function App() {
         <Route path="/chat-screen" element={<ChatScreen />} />
         <Route path="/notifications" element={<Notification />} />
         <Route path="/report-block" element={<ReportBlock />} />
-        <Route path="/admin/user-management" element={<PlaceholderPage title="Admin • User Management" />} />
-        <Route path="/admin/reports" element={<PlaceholderPage title="Admin • Reports" />} />
+        <Route path="/admin/user-management" element={<ManageStudents />} />
+        <Route path="/admin/reports" element={<ReportsMonitoring />} />
         <Route path="/admin/moderation" element={<PlaceholderPage title="Admin • Moderation" />} />
-        <Route path="/admin/profile" element={<PlaceholderPage title="Admin • Profile" />} />
+        <Route path="/admin/profile" element={<AdminViewProfile />} />
       </Routes>
     </Router>
   );
