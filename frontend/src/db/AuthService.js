@@ -1,5 +1,7 @@
 import { supabase } from './supabaseClient';
 
+const GOKU_ID = '770e8400-e29b-41d4-a716-446655447777';
+
 function roleFromEmail(email) {
   const normalized = (email || '').trim().toLowerCase();
   return normalized === 'admin@matchpal.com' ? 'admin' : 'user';
@@ -31,10 +33,10 @@ class AuthService {
     // We return a mock "data" object that looks like a real Supabase response
     return {
       user: {
-        id: '770e8400-e29b-41d4-a716-446655447777',
+        id: GOKU_ID,
         email: resolvedEmail,
         role,
-        user_metadata: { full_name: 'Alex Rivers' }
+        user_metadata: { full_name: 'Goku' }
       },
       session: {
         access_token: 'fake-token',
@@ -53,7 +55,7 @@ class AuthService {
   async getCurrentUser() {
     const email = this._lastLoginEmail || 'test@matchpal.com';
     return {
-      id: '770e8400-e29b-41d4-a716-446655447777',
+      id: GOKU_ID,
       email,
       role: roleFromEmail(email)
     };
@@ -61,3 +63,4 @@ class AuthService {
 }
 
 export const authService = new AuthService();
+export { GOKU_ID };

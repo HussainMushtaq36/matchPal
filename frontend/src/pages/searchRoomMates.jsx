@@ -1,9 +1,74 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Search, MapPin, SlidersHorizontal, Heart } from "lucide-react";
+import { authService } from "../db/AuthService";
+import { profileService } from "../db/ProfileService";
+import { matchService } from "../db/MatchService";
 
 export default function SearchRoomMates() {
   const navigate = useNavigate();
+  const [allUsers, setAllUsers] = useState([]);
+  const [preferencesByUserId, setPreferencesByUserId] = useState({});
+  const [query, setQuery] = useState("");
+  const [activeTag, setActiveTag] = useState("");
+  const [requestState, setRequestState] = useState({});
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        const users = await profileService.getAllProfiles(user.id);
+        const prefs = await profileService.getPreferencesByUserIds(users.map((u) => u.id));
+        const mappedPrefs = prefs.reduce((acc, pref) => {
+          acc[pref.user_id] = pref;
+          return acc;
+        }, {});
+        setAllUsers(users);
+        setPreferencesByUserId(mappedPrefs);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    load();
+  }, []);
+
+  const filteredUsers = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return allUsers.filter((user) => {
+      const nameMatch = !normalizedQuery || (user.full_name || "").toLowerCase().includes(normalizedQuery);
+      if (!nameMatch) return false;
+      if (!activeTag) return true;
+      const tags = preferencesByUserId[user.id]?.tags || [];
+      return tags.includes(activeTag);
+    });
+  }, [allUsers, query, activeTag, preferencesByUserId]);
+
+  const tags = useMemo(() => {
+    const bucket = new Set();
+    Object.values(preferencesByUserId).forEach((pref) => {
+      (pref.tags || []).forEach((tag) => bucket.add(tag));
+    });
+    return Array.from(bucket);
+  }, [preferencesByUserId]);
+
+  const handleSendRequest = async (targetUserId) => {
+    if (requestState[targetUserId]) return;
+    setRequestState((prev) => ({ ...prev, [targetUserId]: "processing" }));
+    try {
+      const user = await authService.getCurrentUser();
+      const exists = await matchService.hasInteraction(user.id, targetUserId, "like");
+      if (!exists) {
+        await matchService.recordInteraction(user.id, targetUserId, "like");
+      }
+      setRequestState((prev) => ({ ...prev, [targetUserId]: "success" }));
+      setTimeout(() => {
+        setRequestState((prev) => ({ ...prev, [targetUserId]: "" }));
+      }, 2000);
+    } catch (error) {
+      console.error(error);
+      setRequestState((prev) => ({ ...prev, [targetUserId]: "" }));
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#f9f9ff] flex flex-col items-center py-5 px-4">
@@ -23,6 +88,8 @@ export default function SearchRoomMates() {
             <Search size={20} className="text-[#596171]" />
             <input 
               placeholder="Search by name..." 
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
               className="bg-transparent border-none outline-none text-sm font-semibold w-full"
             />
           </div>
@@ -38,9 +105,16 @@ export default function SearchRoomMates() {
 
         {/* Category Pills */}
         <div className="mt-6 flex gap-2 overflow-x-auto no-scrollbar pb-2">
-          <button className="bg-[#0058bc] text-white px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap">Pet Friendly</button>
-          <button className="bg-blue-100 text-[#0058bc] px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap">Non-Smoker</button>
-          <button className="bg-blue-100 text-[#0058bc] px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap">Remote Work</button>
+          {tags.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => setActiveTag((prev) => (prev === tag ? "" : tag))}
+              className={`${activeTag === tag ? "bg-[#0058bc] text-white" : "bg-blue-100 text-[#0058bc]"} px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap`}
+            >
+              {tag}
+            </button>
+          ))}
         </div>
 
         {/* Results List */}
@@ -50,33 +124,32 @@ export default function SearchRoomMates() {
         </div>
 
         <div className="space-y-4 pb-8">
-          {[
-            { name: "Alex Rivers", score: "94%", loc: "1.2 miles away", img: 11 },
-            { name: "Marcus Chen", score: "92%", loc: "0.8 miles away", img: 15 }
-          ].map((person) => (
-            <div key={person.name} className="bg-white border border-gray-100 shadow-sm p-3 rounded-3xl flex items-center gap-4 hover:shadow-md transition-shadow">
+          {filteredUsers.map((person, idx) => (
+            <div key={person.id} className="bg-white border border-gray-100 shadow-sm p-3 rounded-3xl flex items-center gap-4 hover:shadow-md transition-shadow">
               <div className="relative">
                 <img 
-                  src={`https://i.pravatar.cc/150?img=${person.img}`} 
+                  src={person.avatar_url || `https://i.pravatar.cc/150?img=${(idx % 40) + 10}`} 
                   className="w-20 h-20 rounded-2xl object-cover" 
-                  alt={person.name} 
+                  alt={person.full_name} 
                 />
-                <span className="absolute -top-1 -right-1 bg-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-sm">
-                  {person.score}
-                </span>
               </div>
               <div className="flex-1">
-                <h4 className="font-bold text-[#181c23]">{person.name}</h4>
+                <h4 className="font-bold text-[#181c23]">{person.full_name}</h4>
                 <div className="flex items-center gap-1 text-[#596171] text-[10px] mt-1 font-bold">
-                  <MapPin size={10} /> {person.loc}
+                  <MapPin size={10} /> {person.city || "Unknown city"}
                 </div>
-                <div className="flex mt-2 gap-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#0058bc]"></div>
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-300"></div>
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-100"></div>
+                <div className="flex mt-2 gap-1 flex-wrap">
+                  {(preferencesByUserId[person.id]?.tags || []).slice(0, 3).map((tag) => (
+                    <span key={tag} className="text-[9px] px-2 py-0.5 rounded-md bg-blue-100 text-[#0058bc]">{tag}</span>
+                  ))}
                 </div>
               </div>
-              <button className="bg-[#f0f7ff] p-3 rounded-2xl text-[#0058bc] hover:bg-[#0058bc] hover:text-white transition-colors">
+              <button
+                type="button"
+                disabled={requestState[person.id] === "processing" || requestState[person.id] === "success"}
+                onClick={() => handleSendRequest(person.id)}
+                className="bg-[#f0f7ff] p-3 rounded-2xl text-[#0058bc] hover:bg-[#0058bc] hover:text-white transition-colors disabled:opacity-60"
+              >
                 <Heart size={20} />
               </button>
             </div>

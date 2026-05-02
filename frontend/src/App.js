@@ -55,7 +55,7 @@ function App() {
         <Route path="/admin/user-management" element={<ManageStudents />} />
         <Route path="/admin/reports" element={<ReportsMonitoring />} />
         <Route path="/admin/moderation" element={<PlaceholderPage title="Admin • Moderation" />} />
-        <Route path="/admin/profile" element={<AdminViewProfile />} />
+        <Route path="/admin/view-profile/:userId" element={<AdminViewProfile />} />
       </Routes>
     </Router>
   );

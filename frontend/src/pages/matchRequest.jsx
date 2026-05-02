@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Check, X } from "lucide-react";
 import { authService } from "../db/AuthService";
 import { matchService } from "../db/MatchService";
+import { profileService } from "../db/ProfileService";
 
 const wrapperStyle = {
   maxWidth: "390px",
@@ -13,20 +14,28 @@ const wrapperStyle = {
   flexDirection: "column",
 };
 
-const REQUESTS = [
-  { id: "incoming-match-a", dbId: "770e8400-e29b-41d4-a716-446655447777", name: "Samina", imgIndex: 32 },
-  { id: "incoming-match-b", dbId: "770e8400-e29b-41d4-a716-446655447777", name: "Rifat", imgIndex: 33 },
-  { id: "incoming-match-c", dbId: "770e8400-e29b-41d4-a716-446655447777", name: "Mou", imgIndex: 34 },
-];
-
 export default function MatchRequest() {
   const navigate = useNavigate();
+  const [requests, setRequests] = useState([]);
   const [interactionDone, setInteractionDone] = useState({});
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        const profiles = await profileService.getAllProfiles(user.id);
+        setRequests(profiles.slice(0, 10));
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    load();
+  }, []);
 
   const handleAccept = async (row) => {
     try {
       const user = await authService.getCurrentUser();
-      await matchService.recordInteraction(user.id, row.dbId, "accept");
+      await matchService.recordInteraction(user.id, row.id, "accept");
       setInteractionDone((prev) => ({ ...prev, [row.id]: "accept" }));
     } catch (error) {
       console.error(error);
@@ -37,7 +46,7 @@ export default function MatchRequest() {
   const handleDecline = async (row) => {
     try {
       const user = await authService.getCurrentUser();
-      await matchService.recordInteraction(user.id, row.dbId, "decline");
+      await matchService.recordInteraction(user.id, row.id, "decline");
       setInteractionDone((prev) => ({ ...prev, [row.id]: "decline" }));
     } catch (error) {
       console.error(error);
@@ -54,7 +63,7 @@ export default function MatchRequest() {
 
       <h1 className="mt-4 text-2xl font-bold text-[#111827]">Match Requests</h1>
       <div className="mt-5 space-y-3">
-        {REQUESTS.map((row) => {
+        {requests.map((row, index) => {
           const done = interactionDone[row.id];
           const acceptSent = done === "accept";
           const declineSent = done === "decline";
@@ -63,8 +72,8 @@ export default function MatchRequest() {
               <div className="flex items-center gap-3">
                 <div className="h-12 w-12 rounded-lg bg-[#e5e7eb]">
                   <img
-                    src={`https://i.pravatar.cc/120?img=${row.imgIndex}`}
-                    alt={row.name}
+                    src={row.avatar_url || `https://i.pravatar.cc/120?img=${(index % 40) + 10}`}
+                    alt={row.full_name}
                     className="h-full w-full"
                     style={{ objectFit: "cover", borderRadius: "8px" }}
                     onError={(e) => {
@@ -73,7 +82,7 @@ export default function MatchRequest() {
                   />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-[#111827]">{row.name}</p>
+                  <p className="font-semibold text-[#111827]">{row.full_name}</p>
                   <p className="text-sm text-[#6b7280]">Wants to connect with you</p>
                 </div>
               </div>

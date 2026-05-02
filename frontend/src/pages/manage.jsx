@@ -1,51 +1,38 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Search } from "lucide-react";
 import { adminService } from "../db/AdminService";
 
 const CARD_SHADOW = "shadow-[0_10px_25px_-10px_rgba(0,0,0,0.1)]";
 
-const STUDENTS = [
-  {
-    id: "1",
-    name: "Alex Rivers",
-    major: "Architecture Major",
-    avatar: "https://i.pravatar.cc/96?img=12",
-    badge: { label: "98% MATCH", bg: "#A1BEFD", color: "#2D4C83" },
-  },
-  {
-    id: "2",
-    name: "Jordan Chen",
-    major: "Computer Science",
-    avatar: "https://i.pravatar.cc/96?img=33",
-    badge: { label: "82% MATCH", bg: "#E6E8F3", color: "#414755" },
-  },
-  {
-    id: "3",
-    name: "Maya Lopez",
-    major: "Digital Media",
-    avatar: "https://i.pravatar.cc/96?img=45",
-    badge: { label: "NEW USER", bg: "#FFDBCC", color: "#351000" },
-  },
-  {
-    id: "4",
-    name: "Sam Taylor",
-    major: "Biotechnology",
-    avatar: "https://i.pravatar.cc/96?img=52",
-    badge: { label: "VERIFIED", bg: "#E6E8F3", color: "#414755" },
-  },
-];
-
-const initialRows = () =>
-  STUDENTS.map((s) => ({ ...s, accountStatus: "Active" }));
-
 export default function ManageStudents() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
-  const [rows, setRows] = useState(initialRows);
+  const [rows, setRows] = useState([]);
   const [updatingId, setUpdatingId] = useState(null);
   const [statusLabelById, setStatusLabelById] = useState({});
   const [deletingId, setDeletingId] = useState(null);
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const users = await adminService.getAllUsers();
+        setRows(
+          users.map((u) => ({
+            id: u.id,
+            name: u.full_name || "Student",
+            major: u.major || u.bio || "No major",
+            avatar: u.avatar_url || "https://i.pravatar.cc/96?img=12",
+            accountStatus: u.status || "Active",
+            badge: { label: "USER", bg: "#E6E8F3", color: "#414755" },
+          }))
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    loadUsers();
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -215,7 +202,7 @@ export default function ManageStudents() {
               <div className="mt-4 flex flex-row gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => navigate(`/admin/profile?userId=${s.id}`)}
+                  onClick={() => navigate(`/admin/view-profile/${s.id}`)}
                   className="flex-1 rounded-md bg-[#e6e8f3] py-3 text-center text-sm font-bold text-[#0058bc]"
                 >
                   Edit

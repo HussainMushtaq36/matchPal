@@ -5,7 +5,9 @@ class ChatService {
   async sendMessage(senderId, receiverId, content) {
     const { data, error } = await supabase
       .from('messages')
-      .insert([{ sender_id: senderId, receiver_id: receiverId, content: content }]);
+      .insert([{ sender_id: senderId, receiver_id: receiverId, content: content }])
+      .select()
+      .single();
       
     if (error) throw error;
     return data;
@@ -21,6 +23,16 @@ class ChatService {
       
     if (error) throw error;
     return data;
+  }
+
+  async getConversationPeers(userId) {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('sender_id, receiver_id, content, created_at')
+      .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
   }
 }
 

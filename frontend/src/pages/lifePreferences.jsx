@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Moon, BookOpen, Trash2, Volume2, Compass, Heart, MessageSquare, User } from "lucide-react";
 import { authService } from "../db/AuthService";
@@ -15,6 +15,25 @@ export default function LifePreferences() {
   const [tags, setTags] = useState(["Non-Smoker", "Night Owl"]);
   const [newTag, setNewTag] = useState("");
   const [saveLabel, setSaveLabel] = useState("Save");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const loadPreferences = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        const profile = await profileService.getProfile(user.id);
+        const pref = profile?.preferences;
+        if (!pref) return;
+        setCleanliness(pref.cleanliness_level || "Neat freak");
+        setSleepSchedule(pref.sleep_schedule || "Early bird");
+        setStudyHabit(pref.study_habit || STUDY_OPTIONS[0]);
+        setTags(pref.tags || []);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    loadPreferences();
+  }, []);
 
   const addTag = () => {
     const cleaned = newTag.trim();
@@ -28,7 +47,8 @@ export default function LifePreferences() {
   };
 
   const handleSave = async () => {
-    setSaveLabel("Saving...");
+    setSaving(true);
+    setSaveLabel("Processing...");
     try {
       const user = await authService.getCurrentUser();
       await profileService.updatePreferences(user.id, {
@@ -42,6 +62,8 @@ export default function LifePreferences() {
     } catch (error) {
       console.error(error);
       setSaveLabel("Save");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -58,7 +80,7 @@ export default function LifePreferences() {
           <button
             type="button"
             onClick={handleSave}
-            disabled={saveLabel === "Saving..."}
+            disabled={saving}
             className="bg-[#0058bc] text-white px-5 py-2 rounded-xl text-xs font-bold disabled:opacity-50 min-w-[5rem]"
           >
             {saveLabel}

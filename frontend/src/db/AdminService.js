@@ -1,6 +1,44 @@
 import { supabase } from './supabaseClient';
 
 class AdminService {
+  async getAllUsers() {
+    const { data, error } = await supabase.from('profiles').select('*');
+    if (error) throw error;
+    return data || [];
+  }
+
+  async getUserById(userId) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async getPreferencesByUserId(userId) {
+    const { data, error } = await supabase
+      .from('preferences')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  }
+
+  async getAllReports() {
+    const { data, error } = await supabase.from('user_reports').select('*');
+    if (error) throw error;
+    return data || [];
+  }
+
+  async getAllInteractions() {
+    const { data, error } = await supabase.from('interactions').select('*');
+    if (error) throw error;
+    return data || [];
+  }
+
   async updateUserStatus(userId, newStatus) {
     const { data, error } = await supabase
       .from('profiles')

@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, MessageCircle, Send } from "lucide-react";
 import { authService } from "../db/AuthService";
 import { chatService } from "../db/ChatService";
+import { profileService } from "../db/ProfileService";
 
 const wrapperStyle = {
   maxWidth: "390px",
@@ -17,12 +18,42 @@ export default function Messages() {
   const navigate = useNavigate();
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
-  const [threads, setThreads] = useState([
-    { id: "thread-1", dbId: "770e8400-e29b-41d4-a716-446655447777", name: "Mina Rahman", preview: "Last message preview...", imgIndex: 45 },
-    { id: "thread-2", dbId: "770e8400-e29b-41d4-a716-446655447777", name: "Samir", preview: "Last message preview...", imgIndex: 46 },
-    { id: "thread-3", dbId: "770e8400-e29b-41d4-a716-446655447777", name: "John Doe", preview: "Last message preview...", imgIndex: 47 },
-  ]);
-  const [selectedThreadId, setSelectedThreadId] = useState("thread-1");
+  const [threads, setThreads] = useState([]);
+  const [selectedThreadId, setSelectedThreadId] = useState("");
+
+  useEffect(() => {
+    const loadThreads = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        const rows = await chatService.getConversationPeers(user.id);
+        const peerIds = Array.from(
+          new Set(
+            rows.map((row) => (row.sender_id === user.id ? row.receiver_id : row.sender_id))
+          )
+        );
+        const allProfiles = await profileService.getAllProfiles();
+        const byId = allProfiles.reduce((acc, profile) => {
+          acc[profile.id] = profile;
+          return acc;
+        }, {});
+        const deduped = peerIds.map((peerId) => {
+          const row = rows.find((entry) => entry.sender_id === peerId || entry.receiver_id === peerId);
+          return {
+            id: peerId,
+            dbId: peerId,
+            name: byId[peerId]?.full_name || "Student",
+            preview: row?.content || "",
+            avatar: byId[peerId]?.avatar_url || "",
+          };
+        });
+        setThreads(deduped);
+        if (deduped[0]) setSelectedThreadId(deduped[0].id);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    loadThreads();
+  }, []);
 
   const sendMessage = async () => {
     const text = draft.trim();
@@ -62,14 +93,14 @@ export default function Messages() {
             type="button"
             onClick={() => {
               setSelectedThreadId(thread.id);
-              navigate("/chat-screen");
+              navigate("/chat-screen", { state: { peerId: thread.dbId } });
             }}
             className="w-full rounded-xl border border-[#e5e7eb] p-3 text-left"
           >
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-lg bg-[#e5e7eb]">
                 <img
-                  src={`https://i.pravatar.cc/120?img=${thread.imgIndex}`}
+                  src={thread.avatar || "https://i.pravatar.cc/120?img=10"}
                   alt={thread.name}
                   className="h-full w-full"
                   style={{ objectFit: "cover", borderRadius: "8px" }}
@@ -108,7 +139,7 @@ export default function Messages() {
           className="flex items-center justify-center gap-2 rounded-lg bg-[#0058bc] px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
           <Send size={18} />
-          Send
+          {sending ? "Processing..." : "Send"}
         </button>
       </div>
     </div>

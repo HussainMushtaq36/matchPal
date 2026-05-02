@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { authService } from "../db/AuthService";
+import { profileService } from "../db/ProfileService";
 
 function MenuIcon() {
   return (
@@ -109,6 +111,23 @@ function NavRow({ icon, label, to, onClick, active = false, highlight = false, b
 
 export default function UserDashboard() {
   const navigate = useNavigate();
+  const [identity, setIdentity] = useState({ full_name: "Student", email: "" });
+
+  useEffect(() => {
+    const loadIdentity = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        const profile = await profileService.getProfile(user.id);
+        setIdentity({
+          full_name: profile?.full_name || "Student",
+          email: profile?.email || user.email || "",
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    loadIdentity();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#f9f9ff] px-3 py-5" style={{ maxWidth: "390px", margin: "0 auto", minHeight: "100vh" }}>
@@ -132,8 +151,9 @@ export default function UserDashboard() {
             <h1 className="mt-1 text-[44px] font-black leading-[1.1] text-[#181c23]">
               Hello,
               <br />
-              Alex Rivers
+              {identity.full_name}
             </h1>
+            <p className="mt-2 text-[12px] font-semibold text-[#596171]">{identity.email}</p>
           </section>
 
           <section className="space-y-1 rounded-lg bg-[#f1f3fe] p-2">

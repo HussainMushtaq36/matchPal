@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Heart, MapPin } from "lucide-react";
 import { authService } from "../db/AuthService";
 import { matchService } from "../db/MatchService";
+import { profileService } from "../db/ProfileService";
 
 const wrapperStyle = {
   maxWidth: "390px",
@@ -13,24 +14,42 @@ const wrapperStyle = {
   flexDirection: "column",
 };
 
-const SUGGESTED = [
-  { id: "potential-match-1", dbId: "770e8400-e29b-41d4-a716-446655447777", name: "Mina Rahman", imgIndex: 21 },
-  { id: "potential-match-2", dbId: "770e8400-e29b-41d4-a716-446655447777", name: "David Paul", imgIndex: 22 },
-  { id: "potential-match-3", dbId: "770e8400-e29b-41d4-a716-446655447777", name: "Anika Noor", imgIndex: 23 },
-];
-
 export default function SuggestedMatches() {
   const navigate = useNavigate();
+  const [users, setUsers] = useState([]);
   const [requestSentFor, setRequestSentFor] = useState({});
 
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        const profiles = await profileService.getAllProfiles(user.id);
+        setUsers(profiles);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    load();
+  }, []);
+
+  const sortedUsers = useMemo(() => {
+    return [...users].sort((a, b) => (a.full_name || "").localeCompare(b.full_name || ""));
+  }, [users]);
+
   const handleSendRequest = async (row) => {
+    if (requestSentFor[row.id]) return;
+    setRequestSentFor((prev) => ({ ...prev, [row.id]: "processing" }));
     try {
       const user = await authService.getCurrentUser();
-      await matchService.recordInteraction(user.id, row.dbId, "like");
-      setRequestSentFor((prev) => ({ ...prev, [row.id]: true }));
+      const exists = await matchService.hasInteraction(user.id, row.id, "like");
+      if (!exists) {
+        await matchService.recordInteraction(user.id, row.id, "like");
+      }
+      setRequestSentFor((prev) => ({ ...prev, [row.id]: "success" }));
+      setTimeout(() => setRequestSentFor((prev) => ({ ...prev, [row.id]: "" })), 2000);
     } catch (error) {
       console.error(error);
-      setRequestSentFor((prev) => ({ ...prev, [row.id]: false }));
+      setRequestSentFor((prev) => ({ ...prev, [row.id]: "" }));
     }
   };
 
@@ -45,14 +64,15 @@ export default function SuggestedMatches() {
       <p className="mt-1 text-sm text-[#6b7280]">Recommended for your preferences.</p>
 
       <div className="mt-5 space-y-4">
-        {SUGGESTED.map((row) => {
-          const sent = requestSentFor[row.id];
+        {sortedUsers.map((row, index) => {
+          const sent = requestSentFor[row.id] === "success";
+          const processing = requestSentFor[row.id] === "processing";
           return (
             <div key={row.id} className="rounded-xl border border-[#e5e7eb] p-3">
               <div className="h-40 w-full rounded-lg bg-[#e5e7eb]">
                 <img
-                  src={`https://i.pravatar.cc/400?img=${row.imgIndex}`}
-                  alt={row.name}
+                  src={row.avatar_url || `https://i.pravatar.cc/400?img=${(index % 50) + 10}`}
+                  alt={row.full_name}
                   className="h-full w-full"
                   style={{ objectFit: "cover", borderRadius: "8px" }}
                   onError={(e) => {
@@ -62,19 +82,19 @@ export default function SuggestedMatches() {
               </div>
               <div className="mt-3 flex items-start justify-between">
                 <div>
-                  <p className="font-semibold text-[#111827]">{row.name}</p>
-                  <p className="text-sm text-[#6b7280]">Quiet, clean, student friendly</p>
+                  <p className="font-semibold text-[#111827]">{row.full_name}</p>
+                  <p className="text-sm text-[#6b7280]">{row.city || "Student profile"}</p>
                 </div>
                 <MapPin size={24} className="text-[#0058bc]" />
               </div>
               <button
                 type="button"
-                disabled={sent}
+                disabled={sent || processing}
                 onClick={() => handleSendRequest(row)}
                 className="mt-3 w-full flex items-center justify-center gap-3 rounded-lg bg-[#0058bc] px-3 py-2 text-sm font-semibold text-white disabled:bg-[#94a3b8] disabled:cursor-not-allowed"
               >
                 <Heart size={20} style={{ minWidth: "20px" }} />
-                {sent ? "Request Sent ✓" : "Send Match Request"}
+                {processing ? "Processing..." : sent ? "Request Sent ✓" : "Send Match Request"}
               </button>
             </div>
           );

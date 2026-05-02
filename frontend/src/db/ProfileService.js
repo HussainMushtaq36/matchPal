@@ -25,30 +25,33 @@ class ProfileService {
   }
 
   async updatePreferences(userId, prefData) {
-    const { data: existing, error: selectError } = await supabase
-      .from('preferences')
-      .select('id')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (selectError) throw selectError;
-
-    if (existing) {
-      const { data, error } = await supabase
-        .from('preferences')
-        .update(prefData)
-        .eq('user_id', userId);
-
-      if (error) throw error;
-      return data;
-    }
-
     const { data, error } = await supabase
       .from('preferences')
-      .insert([{ user_id: userId, ...prefData }]);
+      .upsert([{ user_id: userId, ...prefData }], { onConflict: 'user_id' })
+      .select();
 
     if (error) throw error;
     return data;
+  }
+
+  async getAllProfiles(excludeUserId) {
+    let query = supabase.from('profiles').select('*');
+    if (excludeUserId) {
+      query = query.neq('id', excludeUserId);
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  }
+
+  async getPreferencesByUserIds(userIds) {
+    if (!Array.isArray(userIds) || userIds.length === 0) return [];
+    const { data, error } = await supabase
+      .from('preferences')
+      .select('*')
+      .in('user_id', userIds);
+    if (error) throw error;
+    return data || [];
   }
 }
 

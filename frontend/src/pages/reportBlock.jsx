@@ -1,39 +1,85 @@
 import React, { useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Flag } from "lucide-react";
 import { supabase } from "../db/supabaseClient";
 import { authService } from "../db/AuthService";
-
-const REPORTED_PROFILE_ID = "reported-profile-mock-789";
+import { profileService } from "../db/ProfileService";
 
 export default function ReportBlock() {
   const navigate = useNavigate();
   const [reason, setReason] = useState("");
   const [details, setDetails] = useState("");
-  const [submitLabel, setSubmitLabel] = useState("Submit Report");
-  const [submitted, setSubmitted] = useState(false);
+  const [profiles, setProfiles] = useState([]);
+  const [targetId, setTargetId] = useState("");
+  const [reportLabel, setReportLabel] = useState("Report");
+  const [blockLabel, setBlockLabel] = useState("Block");
+  const [reportBusy, setReportBusy] = useState(false);
+  const [blockBusy, setBlockBusy] = useState(false);
 
-  const handleSubmit = async () => {
-    if (submitted) return;
-    setSubmitLabel("Submitting...");
+  useEffect(() => {
+    const loadProfiles = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        const rows = await profileService.getAllProfiles(user.id);
+        setProfiles(rows);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    loadProfiles();
+  }, []);
+
+  const withButtonFeedback = (setBusy, setLabel, defaultLabel, successLabel) => {
+    setBusy(true);
+    setLabel("Processing...");
+    setTimeout(() => {
+      setLabel(successLabel);
+      setTimeout(() => {
+        setLabel(defaultLabel);
+        setBusy(false);
+      }, 2000);
+    }, 100);
+  };
+
+  const handleReport = async () => {
+    if (reportBusy || !targetId) return;
     try {
       const user = await authService.getCurrentUser();
-      // Simulated moderation pipeline: persist like a real reports row (schema may vary by project).
       const { error } = await supabase.from("user_reports").insert([
         {
           reporter_id: user.id,
-          reported_id: REPORTED_PROFILE_ID,
+          target_id: targetId,
           reason: reason || "unspecified",
           details: details || null,
           status: "Pending",
         },
       ]);
       if (error) throw error;
-      setSubmitLabel("Report Submitted ✓");
-      setSubmitted(true);
+      withButtonFeedback(setReportBusy, setReportLabel, "Report", "Report Filed ✓");
     } catch (error) {
       console.error(error);
-      setSubmitLabel("Submit Report");
+      setReportLabel("Report");
+      setReportBusy(false);
+    }
+  };
+
+  const handleBlock = async () => {
+    if (blockBusy || !targetId) return;
+    try {
+      const user = await authService.getCurrentUser();
+      const { error } = await supabase.from("blocked_users").insert([
+        {
+          reporter_id: user.id,
+          target_id: targetId,
+        },
+      ]);
+      if (error) throw error;
+      withButtonFeedback(setBlockBusy, setBlockLabel, "Block", "User Blocked ✓");
+    } catch (error) {
+      console.error(error);
+      setBlockLabel("Block");
+      setBlockBusy(false);
     }
   };
 
@@ -51,18 +97,18 @@ export default function ReportBlock() {
           We take your safety seriously. Tell us why you'd like to report or block this user. Your report is anonymous.
         </p>
 
-        {/* User Card */}
-        <div className="mt-8 bg-[#f9f9ff] border border-gray-100 rounded-3xl p-4 flex items-center gap-4 relative">
-          <span className="absolute -top-2 right-4 bg-orange-700 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-md">Private</span>
-          <img 
-            src="https://i.pravatar.cc/150?img=12" 
-            className="w-14 h-14 rounded-xl object-cover shadow-sm" 
-            alt="Alex Rivers" 
-          />
-          <div>
-            <p className="text-[10px] font-bold text-[#596171] uppercase tracking-wider">Reporting</p>
-            <h4 className="font-bold text-[#181c23] text-lg">Alex Rivers</h4>
-          </div>
+        <div className="mt-8 bg-[#f9f9ff] border border-gray-100 rounded-3xl p-4 relative">
+          <p className="text-[10px] font-bold text-[#596171] uppercase tracking-wider mb-2">Select user</p>
+          <select
+            value={targetId}
+            onChange={(e) => setTargetId(e.target.value)}
+            className="w-full bg-white border border-[#d9ddea] rounded-xl p-3 text-sm font-semibold text-[#181c23]"
+          >
+            <option value="">Choose user...</option>
+            {profiles.map((profile) => (
+              <option key={profile.id} value={profile.id}>{profile.full_name}</option>
+            ))}
+          </select>
         </div>
 
         {/* Form Fields */}
@@ -93,16 +139,25 @@ export default function ReportBlock() {
           </div>
         </div>
 
-        {/* Action Button */}
-        <button
-          type="button"
-          disabled={submitted}
-          onClick={handleSubmit}
-          className="mt-8 w-full bg-[#0058bc] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-lg shadow-blue-200 disabled:opacity-70 disabled:cursor-not-allowed"
-        >
-          <Flag size={18} />
-          {submitLabel}
-        </button>
+        <div className="mt-8 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            disabled={!targetId || reportBusy || blockBusy}
+            onClick={handleReport}
+            className="w-full bg-[#0058bc] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-lg shadow-blue-200 disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            <Flag size={18} />
+            {reportBusy ? "Processing..." : reportLabel}
+          </button>
+          <button
+            type="button"
+            disabled={!targetId || reportBusy || blockBusy}
+            onClick={handleBlock}
+            className="w-full bg-[#e6e8f3] text-[#0058bc] py-4 rounded-2xl font-bold disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {blockBusy ? "Processing..." : blockLabel}
+          </button>
+        </div>
 
         <p className="mt-6 text-center text-[10px] font-bold text-[#b1b5c3] uppercase tracking-widest">
           Our moderation team reviews reports within 24 hours.

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Camera, Plus, X } from "lucide-react";
 import { authService } from "../db/AuthService";
@@ -8,13 +8,26 @@ export default function EditProfile() {
   const navigate = useNavigate();
   const [tags, setTags] = useState(["Cleanliness", "Non-Smoker", "Pet Friendly"]);
   const [newTag, setNewTag] = useState("");
-  const [fullName, setFullName] = useState("Alex Rivers");
-  const [bio, setBio] = useState(
-    "I am a quiet professional working in tech. I enjoy weekend hikes, clean kitchens, and roommate board game nights. Looking for a respectful roommate."
-  );
+  const [fullName, setFullName] = useState("");
+  const [bio, setBio] = useState("");
   const [saveLabel, setSaveLabel] = useState("Save");
   const [avatarUrl, setAvatarUrl] = useState("https://i.pravatar.cc/220?img=12");
   const [avatarLabel, setAvatarLabel] = useState("");
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        const profile = await profileService.getProfile(user.id);
+        setFullName(profile?.full_name || "");
+        setBio(profile?.bio || "");
+        setAvatarUrl(profile?.avatar_url || "https://i.pravatar.cc/220?img=12");
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    loadProfile();
+  }, []);
 
   const addTag = () => {
     const cleaned = newTag.trim();
@@ -24,7 +37,7 @@ export default function EditProfile() {
   };
 
   const handleMockAvatarUpload = async () => {
-    setAvatarLabel("Saving...");
+    setAvatarLabel("Processing...");
     try {
       const user = await authService.getCurrentUser();
       const placeholderAvatar = "https://i.pravatar.cc/220?img=65";
@@ -32,7 +45,7 @@ export default function EditProfile() {
         avatar_url: placeholderAvatar,
       });
       setAvatarUrl(placeholderAvatar);
-      setAvatarLabel("Saved ✓");
+      setAvatarLabel("Success ✓");
       setTimeout(() => setAvatarLabel(""), 2000);
     } catch (error) {
       console.error(error);
@@ -41,7 +54,7 @@ export default function EditProfile() {
   };
 
   const handleSave = async () => {
-    setSaveLabel("Saving...");
+    setSaveLabel("Processing...");
     try {
       const user = await authService.getCurrentUser();
       await profileService.updateProfile(user.id, {
@@ -50,7 +63,7 @@ export default function EditProfile() {
       });
       setFullName(fullName);
       setBio(bio);
-      setSaveLabel("Saved ✓");
+      setSaveLabel("Success ✓");
       setTimeout(() => setSaveLabel("Save"), 2000);
     } catch (error) {
       console.error(error);

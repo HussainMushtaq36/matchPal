@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Send } from "lucide-react";
 import { authService } from "../db/AuthService";
 import { chatService } from "../db/ChatService";
@@ -13,32 +13,45 @@ const wrapperStyle = {
   flexDirection: "column",
 };
 
-/** Stand-in peer when no route param is provided */
-const MOCK_PEER_ID = "770e8400-e29b-41d4-a716-446655447777";
-
 export default function ChatScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const peerId = location.state?.peerId || "";
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
-  const [messages, setMessages] = useState([
-    { id: "m1", mine: false, text: "Hi! Is the room still available?" },
-    { id: "m2", mine: true, text: "Yes, it is available from next week." },
-  ]);
+  const [messages, setMessages] = useState([]);
+
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (!peerId) return;
+      try {
+        const user = await authService.getCurrentUser();
+        const rows = await chatService.getMessages(user.id, peerId);
+        setMessages(
+          rows.map((m) => ({
+            id: m.id,
+            mine: m.sender_id === user.id,
+            text: m.content,
+          }))
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    loadMessages();
+  }, [peerId]);
 
   const handleSend = async () => {
     const text = draft.trim();
-    if (!text || sending) return;
-    const localMessage = { id: `local-${Date.now()}`, mine: true, text };
-    setMessages((prev) => [...prev, localMessage]);
-    setDraft("");
+    if (!text || sending || !peerId) return;
     setSending(true);
     try {
       const user = await authService.getCurrentUser();
-      await chatService.sendMessage(user.id, MOCK_PEER_ID, text);
+      const inserted = await chatService.sendMessage(user.id, peerId, text);
+      setMessages((prev) => [...prev, { id: inserted.id, mine: true, text: inserted.content }]);
+      setDraft("");
     } catch (error) {
       console.error(error);
-      setMessages((prev) => prev.filter((m) => m.id !== localMessage.id));
-      setDraft(text);
     } finally {
       setSending(false);
     }
@@ -87,7 +100,7 @@ export default function ChatScreen() {
           className="flex items-center justify-center gap-3 rounded-lg bg-[#0058bc] px-3 py-2 text-sm font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Send size={20} style={{ minWidth: "20px" }} />
-          Send
+          {sending ? "Processing..." : "Send"}
         </button>
       </div>
     </div>

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, AlertCircle, LogOut, Activity, BarChart3, LayoutDashboard, UserCircle } from "lucide-react";
 import { adminService } from "../db/AdminService";
+import { authService } from "../db/AuthService";
+import { profileService } from "../db/ProfileService";
 
 // Simplified Tile for high-fidelity feel
 function Tile({ title, onClick, icon: Icon, primary = false }) {
@@ -34,12 +36,22 @@ function StatCard({ label, value, valueColor = "#181c23" }) {
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [pendingMatches, setPendingMatches] = useState(0);
+  const [reportedUsers, setReportedUsers] = useState(0);
+  const [newSignups, setNewSignups] = useState(0);
+  const [adminProfile, setAdminProfile] = useState(null);
 
   useEffect(() => {
     const loadPendingMatches = async () => {
       try {
         const count = await adminService.getPendingMatchesCount();
+        const reports = await adminService.getAllReports();
+        const users = await adminService.getAllUsers();
+        const current = await authService.getCurrentUser();
+        const profile = await profileService.getProfile(current.id);
         setPendingMatches(count);
+        setReportedUsers(reports.filter((r) => r.status === "Pending").length);
+        setNewSignups(users.length);
+        setAdminProfile(profile);
       } catch (error) {
         console.error(error);
       }
@@ -59,13 +71,11 @@ export default function AdminDashboard() {
             </div>
             <span className="text-lg font-black tracking-tight text-[#181c23]">MatchPal</span>
           </div>
-          <button
-            type="button"
-            onClick={() => navigate("/admin/profile")}
+          <button type="button" onClick={() => navigate(`/admin/view-profile/${adminProfile?.id || ""}`)}
             className="h-10 w-10 shrink-0 rounded-2xl bg-gray-200 overflow-hidden border-2 border-white shadow-sm ring-offset-2 focus:outline-none focus:ring-2 focus:ring-[#0058bc]"
             aria-label="Profile"
           >
-            <img src="https://i.pravatar.cc/100?img=3" alt="" className="h-full w-full object-cover" />
+            <img src={adminProfile?.avatar_url || "https://i.pravatar.cc/100?img=3"} alt="" className="h-full w-full object-cover" />
           </button>
         </header>
 
@@ -111,8 +121,8 @@ export default function AdminDashboard() {
             </div>
 
             <div className="flex gap-4">
-              <StatCard label="Reported Users" value="08" valueColor="#9e3d00" />
-              <StatCard label="New Signups" value="+32" valueColor="#0058bc" />
+              <StatCard label="Reported Users" value={String(reportedUsers)} valueColor="#9e3d00" />
+              <StatCard label="New Signups" value={String(newSignups)} valueColor="#0058bc" />
             </div>
           </section>
         </main>
@@ -123,7 +133,7 @@ export default function AdminDashboard() {
             <LayoutDashboard size={22} />
             <span className="text-[8px] font-black uppercase tracking-widest">Control</span>
           </button>
-          <button onClick={() => navigate("/admin/profile")} className="flex flex-col items-center gap-1.5 text-gray-400">
+          <button onClick={() => navigate(`/admin/view-profile/${adminProfile?.id || ""}`)} className="flex flex-col items-center gap-1.5 text-gray-400">
             <UserCircle size={22} />
             <span className="text-[8px] font-black uppercase tracking-widest">Settings</span>
           </button>

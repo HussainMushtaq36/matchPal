@@ -1,60 +1,30 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ShieldCheck, ClipboardCheck, X } from "lucide-react";
 import { adminService } from "../db/AdminService";
 
 const CARD_SHADOW = "shadow-[0_10px_25px_-10px_rgba(0,0,0,0.1)]";
 
-const REPORTS_SEED = [
-  {
-    id: "1",
-    name: "Alex Rivers",
-    reporter: "Reported by: Sarah K.",
-    tier: "PREMIUM MEMBER",
-    tierColor: "#0058bc",
-    quote:
-      '"User sent multiple unsolicited photos that violate the community guidelines regarding safety and respect."',
-    category: "INAPPROPRIATE CONTENT",
-    categoryBg: "#ffdbcc",
-    categoryColor: "#351000",
-    avatar: "https://i.pravatar.cc/112?img=12",
-    dimmed: false,
-  },
-  {
-    id: "2",
-    name: "Elena Rodriguez",
-    reporter: "Reported by: 3 Users",
-    tier: "FREE TIER",
-    tierColor: "#717786",
-    quote:
-      '"Multiple users flagged this profile for automated messaging promoting external real estate links."',
-    category: "SPAM ACTIVITY",
-    categoryBg: "#e0e2ed",
-    categoryColor: "#414755",
-    avatar: "https://i.pravatar.cc/112?img=32",
-    dimmed: false,
-  },
-  {
-    id: "3",
-    name: "James T.",
-    reporter: "Reported by: System",
-    tier: "HIGH RISK SCORE",
-    tierColor: "#ba1a1a",
-    quote: "",
-    category: "UNDER INVESTIGATION",
-    categoryBg: "#414755",
-    categoryColor: "#ffffff",
-    avatar: "https://i.pravatar.cc/112?img=60",
-    dimmed: true,
-    noQuote: true,
-  },
-];
-
 export default function ReportsMonitoring() {
   const navigate = useNavigate();
-  const [reports, setReports] = useState(REPORTS_SEED);
+  const [reports, setReports] = useState([]);
   const [dismissLabelById, setDismissLabelById] = useState({});
   const [reviewLabelById, setReviewLabelById] = useState({});
+
+  useEffect(() => {
+    const loadReports = async () => {
+      try {
+        const rows = await adminService.getAllReports();
+        setReports(rows.map((r) => ({ ...r, dimmed: r.status === "Dismissed" })));
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    loadReports();
+  }, []);
+
+  const activeCount = useMemo(() => reports.filter((r) => !r.dimmed).length, [reports]);
+  const flaggedCount = useMemo(() => reports.filter((r) => r.status === "Pending").length, [reports]);
 
   const handleDismiss = async (id) => {
     setDismissLabelById((prev) => ({ ...prev, [id]: "Dismissing..." }));
@@ -127,10 +97,10 @@ export default function ReportsMonitoring() {
 
         <div className="mt-3 flex flex-row gap-2 pt-3">
           <span className="rounded-xl bg-[#0058bc] px-3 py-1 text-[10px] font-black uppercase tracking-[0.05em] text-white">
-            Active: 12
+            Active: {activeCount}
           </span>
           <span className="rounded-xl bg-[#e0e2ed] px-3 py-1 text-[10px] font-black uppercase tracking-[0.05em] text-[#414755]">
-            Flagged: 4
+            Flagged: {flaggedCount}
           </span>
         </div>
 
@@ -152,40 +122,36 @@ export default function ReportsMonitoring() {
               >
                 <span
                   className="text-[10px] font-black uppercase tracking-tight leading-[15px]"
-                  style={{ color: r.categoryColor }}
+                  style={{ color: "#351000" }}
                 >
-                  {r.category}
+                  {r.reason || "REPORT"}
                 </span>
               </div>
 
               <div className="flex flex-row gap-4 pr-24">
                 <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-[#e0e2ed]">
-                  <img
-                    src={r.avatar}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
+                  <img src={"https://i.pravatar.cc/112?img=12"} alt="" className="h-full w-full object-cover" />
                 </div>
                 <div className="min-w-0 flex-1 flex flex-col gap-1 pt-0.5">
                   <h3 className="text-base font-black leading-6 text-[#181c23]">
-                    {r.name}
+                    {r.target_id}
                   </h3>
                   <p className="text-xs leading-4 text-[#414755]">
-                    {r.reporter}
+                    Reporter: {r.reporter_id}
                   </p>
                   <p
                     className="pt-1 text-[10px] font-bold uppercase tracking-[0.1em]"
-                    style={{ color: r.tierColor }}
+                    style={{ color: "#0058bc" }}
                   >
-                    {r.tier}
+                    {r.status || "Pending"}
                   </p>
                 </div>
               </div>
 
-              {!r.noQuote && (
+              {Boolean(r.details) && (
                 <div className="mt-4 rounded bg-[#f1f3fe] p-3">
                   <p className="text-xs italic leading-[19.5px] text-[#414755]">
-                    {r.quote}
+                    {r.details}
                   </p>
                 </div>
               )}

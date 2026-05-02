@@ -29,6 +29,17 @@ class MatchService {
     if (error) throw error;
     return data;
   }
+
+  async hasInteraction(senderId, receiverId, type) {
+    const { data, error } = await supabase
+      .from('interactions')
+      .select('id, type')
+      .eq('sender_id', senderId)
+      .eq('receiver_id', receiverId)
+      .eq('type', type);
+    if (error) throw error;
+    return (data || []).length > 0;
+  }
 }
 
 export const matchService = new MatchService();
