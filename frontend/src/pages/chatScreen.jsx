@@ -62,7 +62,11 @@ export default function ChatScreen() {
     setSending(true);
     try {
       const senderId = currentUserId || (await authService.getCurrentUser()).id;
-      await messageService.sendMessage(senderId, peerId, text);
+      const newMessage = await messageService.sendMessage(senderId, peerId, text);
+      setMessages((prev) => {
+        if (prev.some((item) => item.id === newMessage.id)) return prev;
+        return [...prev, { id: newMessage.id, mine: true, text: newMessage.content }];
+      });
       setDraft("");
     } catch (error) {
       console.error(error);
