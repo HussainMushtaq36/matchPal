@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logoIcon from "../assets/logo-mark.svg";
-import { authService } from "../db/AuthService";
+import { supabase } from "../db/supabaseClient";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -13,10 +13,31 @@ export default function LoginPage() {
     if (!email || !password) return alert("Please fill in all fields.");
     setLoading(true);
     try {
-      const { user } = await authService.login(email, password);
-      const role = user?.role;
-      if (role === "admin") navigate("/admin-dashboard");
-      else navigate("/user-dashboard");
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+
+      const sessionUser = data?.user || data?.session?.user;
+      if (!sessionUser?.id) {
+        throw new Error("Unable to resolve authenticated user session.");
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", sessionUser.id)
+        .single();
+      if (profileError) throw profileError;
+
+      if (profile?.role === "admin") {
+        navigate("/admin-dashboard");
+      } else if (profile?.role === "user") {
+        navigate("/user-dashboard");
+      } else {
+        throw new Error("Your account role is not configured correctly.");
+      }
     } catch (error) {
       console.error(error);
       alert(error.message || "Login failed");
