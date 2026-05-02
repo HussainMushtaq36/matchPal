@@ -1,48 +1,83 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Save } from "lucide-react";
-
-const wrapperStyle = {
-  maxWidth: "390px",
-  margin: "0 auto",
-  minHeight: "100vh",
-  backgroundColor: "#ffffff",
-  display: "flex",
-  flexDirection: "column",
-};
+import { ArrowLeft, Camera, Plus, X } from "lucide-react";
 
 export default function EditProfile() {
   const navigate = useNavigate();
+  const [tags, setTags] = useState(["Cleanliness", "Non-Smoker", "Pet Friendly"]);
 
   return (
-    <div style={wrapperStyle} className="px-4 pb-8 pt-5">
-      <button type="button" onClick={() => navigate("/user-dashboard")} className="flex items-center justify-center gap-3 self-start text-[#0058bc]">
-        <ArrowLeft size={20} style={{ minWidth: "20px" }} />
-        <span className="font-semibold">Back</span>
-      </button>
-      <h1 className="mt-4 text-2xl font-bold text-[#111827]">Edit Profile</h1>
+    <div className="min-h-screen bg-[#f9f9ff] flex flex-col items-center py-5 px-4">
+      <div className="w-full max-w-[390px] bg-white rounded-[40px] shadow-xl overflow-hidden flex flex-col p-6 pb-10">
+        
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <button onClick={() => navigate(-1)} className="p-2 bg-[#f3f4f6] rounded-full text-[#181c23]">
+            <ArrowLeft size={20} />
+          </button>
+          <span className="font-bold text-[#181c23]">Edit Profile</span>
+          <button 
+            onClick={() => {/* TODO: Connect to ProfileService.update() */}}
+            className="text-[#0058bc] font-bold text-sm"
+          >
+            Save
+          </button>
+        </div>
 
-      <div className="mt-5 rounded-xl border border-[#e5e7eb] p-4">
-        <div className="h-28 w-28 rounded-lg bg-[#e5e7eb]">
-          <img
-            src="https://i.pravatar.cc/220?img=12"
-            alt="Profile"
-            className="h-full w-full"
-            style={{ objectFit: "cover", borderRadius: "8px" }}
-            onError={(e) => {
-              e.currentTarget.style.opacity = "0";
-            }}
-          />
+        {/* Profile Image with Camera Badge */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="relative">
+            <div className="w-28 h-28 rounded-3xl overflow-hidden bg-gray-200 border-4 border-white shadow-md">
+              <img 
+                src="https://i.pravatar.cc/220?img=12" 
+                className="w-full h-full object-cover" 
+                alt="Profile" 
+              />
+            </div>
+            <button className="absolute -bottom-2 -right-2 bg-[#0058bc] text-white p-2 rounded-xl shadow-lg border-2 border-white">
+              <Camera size={18} />
+            </button>
+          </div>
+          <p className="mt-4 text-[10px] font-black text-[#0058bc] uppercase tracking-widest">Premium Member</p>
         </div>
-        <div className="mt-4 space-y-3">
-          <input className="w-full rounded-lg border border-[#d1d5db] px-3 py-2" defaultValue="Alex Rivers" />
-          <input className="w-full rounded-lg border border-[#d1d5db] px-3 py-2" defaultValue="alex@matchpal.com" />
-          <textarea className="w-full rounded-lg border border-[#d1d5db] px-3 py-2" rows={3} defaultValue="Clean and respectful roommate." />
+
+        {/* Form Fields */}
+        <div className="space-y-6">
+          <div>
+            <label className="text-[10px] font-black text-[#596171] uppercase tracking-widest mb-2 block ml-1">Full Name</label>
+            <input 
+              type="text" 
+              defaultValue="Alex Rivers" 
+              className="w-full bg-[#f9f9ff] border border-gray-100 rounded-2xl p-4 text-sm font-bold text-[#181c23] outline-none focus:border-[#0058bc] transition-all shadow-sm"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black text-[#596171] uppercase tracking-widest mb-2 block ml-1">Bio</label>
+            <textarea 
+              rows={4}
+              defaultValue="I am a quiet professional working in tech. I enjoy weekend hikes, clean kitchens, and roommate board game nights. Looking for a respectful roommate."
+              className="w-full bg-[#f9f9ff] border border-gray-100 rounded-2xl p-4 text-sm font-bold text-[#181c23] outline-none focus:border-[#0058bc] transition-all shadow-sm resize-none"
+            />
+            <div className="text-right mt-1 text-[10px] font-bold text-gray-400">124 / 200</div>
+          </div>
+
+          {/* Lifestyle Tags */}
+          <div>
+            <label className="text-[10px] font-black text-[#596171] uppercase tracking-widest mb-3 block ml-1">Lifestyle Tags</label>
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <div key={tag} className="bg-blue-100/50 text-[#0058bc] px-3 py-2 rounded-xl text-xs font-bold border border-blue-200 flex items-center gap-2">
+                  {tag}
+                  <X size={14} className="cursor-pointer" onClick={() => setTags(tags.filter(t => t !== tag))} />
+                </div>
+              ))}
+              <button className="bg-gray-100 text-[#596171] px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border border-dashed border-gray-300">
+                <Plus size={14} /> Add Tag
+              </button>
+            </div>
+          </div>
         </div>
-        <button type="button" className="mt-3 w-full flex items-center justify-center gap-3 rounded-lg bg-[#0058bc] px-3 py-2 text-sm font-semibold text-white">
-          <Save size={20} style={{ minWidth: "20px" }} />
-          Save Changes
-        </button>
       </div>
     </div>
   );

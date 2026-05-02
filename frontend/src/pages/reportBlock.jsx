@@ -1,39 +1,69 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, Ban } from "lucide-react";
-
-const wrapperStyle = {
-  maxWidth: "390px",
-  margin: "0 auto",
-  minHeight: "100vh",
-  backgroundColor: "#ffffff",
-  display: "flex",
-  flexDirection: "column",
-};
+import { ArrowLeft, Flag, ShieldAlert } from "lucide-react";
 
 export default function ReportBlock() {
   const navigate = useNavigate();
 
   return (
-    <div style={wrapperStyle} className="px-4 pb-8 pt-5">
-      <button type="button" onClick={() => navigate("/user-dashboard")} className="flex items-center justify-center gap-3 self-start text-[#0058bc]">
-        <ArrowLeft size={20} style={{ minWidth: "20px" }} />
-        <span className="font-semibold">Back</span>
-      </button>
+    <div className="min-h-screen bg-[#f9f9ff] flex flex-col items-center py-5 px-4">
+      <div className="w-full max-w-[390px] bg-white rounded-[40px] shadow-xl overflow-hidden flex flex-col p-6">
+        
+        {/* Header */}
+        <button onClick={() => navigate(-1)} className="p-2 bg-[#f3f4f6] rounded-full w-10 text-[#181c23] mb-6">
+          <ArrowLeft size={20} />
+        </button>
 
-      <h1 className="mt-4 text-2xl font-bold text-[#111827]">Report / Block</h1>
-      <p className="mt-1 text-sm text-[#6b7280]">Take action on inappropriate behavior.</p>
+        <h1 className="text-3xl font-black text-[#181c23]">Safety <span className="text-[#0058bc]">First.</span></h1>
+        <p className="mt-3 text-[#596171] text-sm font-medium leading-relaxed">
+          We take your safety seriously. Tell us why you'd like to report or block this user. Your report is anonymous.
+        </p>
 
-      <div className="mt-5 space-y-3 rounded-xl border border-[#e5e7eb] p-4">
-        <textarea placeholder="Describe the issue..." rows={4} className="w-full rounded-lg border border-[#d1d5db] px-3 py-2" />
-        <button type="button" className="w-full flex items-center justify-center gap-3 rounded-lg bg-[#dc2626] px-3 py-2 text-sm font-semibold text-white">
-          <AlertTriangle size={20} style={{ minWidth: "20px" }} />
+        {/* User Card */}
+        <div className="mt-8 bg-[#f9f9ff] border border-gray-100 rounded-3xl p-4 flex items-center gap-4 relative">
+          <span className="absolute -top-2 right-4 bg-orange-700 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-md">Private</span>
+          <img 
+            src="https://i.pravatar.cc/150?img=12" 
+            className="w-14 h-14 rounded-xl object-cover shadow-sm" 
+            alt="Alex Rivers" 
+          />
+          <div>
+            <p className="text-[10px] font-bold text-[#596171] uppercase tracking-wider">Reporting</p>
+            <h4 className="font-bold text-[#181c23] text-lg">Alex Rivers</h4>
+          </div>
+        </div>
+
+        {/* Form Fields */}
+        <div className="mt-8 space-y-6">
+          <div>
+            <label className="text-xs font-black text-[#181c23] uppercase tracking-widest mb-2 block">Reason for Report</label>
+            <select className="w-full bg-[#f0efff] border border-[#d9ddea] rounded-2xl p-4 text-sm font-semibold text-[#181c23] outline-none appearance-none">
+              <option>Select a reason...</option>
+              <option>Inappropriate Behavior</option>
+              <option>Spam</option>
+              <option>Fake Profile</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="text-xs font-black text-[#181c23] uppercase tracking-widest mb-2 block">Additional Details (Optional)</label>
+            <textarea 
+              placeholder="Help us understand the situation better..." 
+              rows={4} 
+              className="w-full bg-[#f0efff] border border-[#d9ddea] rounded-3xl p-4 text-sm font-semibold text-[#181c23] outline-none resize-none"
+            />
+          </div>
+        </div>
+
+        {/* Action Button */}
+        <button className="mt-8 w-full bg-[#0058bc] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-lg shadow-blue-200">
+          <Flag size={18} />
           Submit Report
         </button>
-        <button type="button" className="w-full flex items-center justify-center gap-3 rounded-lg border border-[#d1d5db] px-3 py-2 text-sm font-semibold text-[#374151]">
-          <Ban size={20} style={{ minWidth: "20px" }} />
-          Block User
-        </button>
+
+        <p className="mt-6 text-center text-[10px] font-bold text-[#b1b5c3] uppercase tracking-widest">
+          Our moderation team reviews reports within 24 hours.
+        </p>
       </div>
     </div>
   );
