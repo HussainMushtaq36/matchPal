@@ -12,16 +12,14 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { user, error } = await authService.register(formData.email, formData.password, {
-        full_name: formData.name,
-        user_type: formData.userType
-      });
-      
-      if (error) throw error;
+      // All new accounts are standard app users (role: 'user'). Never pass an RBAC/admin role
+      // or any role field to the auth backend from this screen — roles are assigned only via admin tooling / server policy.
+      await authService.signUp(formData.email, formData.password);
       alert("Registration successful! Please check your email for verification.");
       navigate("/login");
     } catch (error) {
-      alert(error.message);
+      console.error(error);
+      alert(error.message || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -79,7 +77,7 @@ export default function RegisterPage() {
         </form>
 
         <p className="mt-6 text-center text-sm text-[#596171]">
-          Have an account? <button onClick={() => navigate("/login")} className="font-bold text-[#0058bc]">Login</button>
+          Have an account? <button type="button" onClick={() => navigate("/login")} className="font-bold text-[#0058bc]">Login</button>
         </p>
       </div>
     </div>

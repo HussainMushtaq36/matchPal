@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Search } from "lucide-react";
+import { adminService } from "../db/AdminService";
 
 const CARD_SHADOW = "shadow-[0_10px_25px_-10px_rgba(0,0,0,0.1)]";
 
@@ -35,18 +36,38 @@ const STUDENTS = [
   },
 ];
 
+const initialRows = () =>
+  STUDENTS.map((s) => ({ ...s, accountStatus: "Active" }));
+
 export default function ManageStudents() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
+  const [rows, setRows] = useState(initialRows);
+  const [updatingId, setUpdatingId] = useState(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return STUDENTS;
-    return STUDENTS.filter(
+    if (!q) return rows;
+    return rows.filter(
       (s) =>
         s.name.toLowerCase().includes(q) || s.major.toLowerCase().includes(q)
     );
-  }, [query]);
+  }, [query, rows]);
+
+  const toggleStatus = async (studentId, currentStatus) => {
+    const next = currentStatus === "Active" ? "Suspended" : "Active";
+    setUpdatingId(studentId);
+    try {
+      await adminService.updateUserStatus(studentId, next);
+      setRows((prev) =>
+        prev.map((r) => (r.id === studentId ? { ...r, accountStatus: next } : r))
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#f9f9ff] flex justify-center">
@@ -100,7 +121,10 @@ export default function ManageStudents() {
         </div>
 
         <section className="mt-8 flex flex-col gap-6">
-          {filtered.map((s) => (
+          {filtered.map((s) => {
+            const active = s.accountStatus === "Active";
+            const busy = updatingId === s.id;
+            return (
             <article
               key={s.id}
               className={`rounded-lg bg-white p-5 ${CARD_SHADOW}`}
@@ -134,6 +158,26 @@ export default function ManageStudents() {
                 </div>
               </div>
 
+              <div className="mt-3 flex flex-row flex-wrap items-center gap-2">
+                <span
+                  className="rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-[0.05em]"
+                  style={{
+                    backgroundColor: active ? "#dcfce7" : "#fee2e2",
+                    color: active ? "#166534" : "#991b1b",
+                  }}
+                >
+                  {s.accountStatus}
+                </span>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => toggleStatus(s.id, s.accountStatus)}
+                  className="rounded-md border border-[#e0e2ed] bg-white px-3 py-1.5 text-[11px] font-bold text-[#0058bc] disabled:opacity-50"
+                >
+                  {busy ? "Updating..." : active ? "Suspend" : "Activate"}
+                </button>
+              </div>
+
               <div className="mt-4 flex flex-row gap-2 pt-2">
                 <button
                   type="button"
@@ -149,7 +193,8 @@ export default function ManageStudents() {
                 </button>
               </div>
             </article>
-          ))}
+            );
+          })}
         </section>
       </div>
     </div>

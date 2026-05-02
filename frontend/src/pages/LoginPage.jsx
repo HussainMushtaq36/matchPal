@@ -9,16 +9,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (role) => {
+  const handleLogin = async () => {
     if (!email || !password) return alert("Please fill in all fields.");
     setLoading(true);
     try {
-      const { user, error } = await authService.login(email, password);
-      if (error) throw error;
-      
-      role === 'admin' ? navigate("/admin-dashboard") : navigate("/user-dashboard");
+      const { user } = await authService.login(email, password);
+      const role = user?.role;
+      if (role === "admin") navigate("/admin-dashboard");
+      else navigate("/user-dashboard");
     } catch (error) {
-      alert(error.message);
+      console.error(error);
+      alert(error.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -62,23 +63,17 @@ export default function LoginPage() {
 
           <div className="mt-8 space-y-4">
             <button
-              onClick={() => handleLogin('user')}
+              type="button"
+              onClick={handleLogin}
               disabled={loading}
               className="h-14 w-full rounded-lg bg-[#0070eb] text-2xl text-white font-semibold disabled:opacity-50"
             >
-              {loading ? "..." : "User Login"}
-            </button>
-            <button
-              onClick={() => handleLogin('admin')}
-              disabled={loading}
-              className="h-14 w-full rounded-lg border-2 border-[#0070eb] text-2xl text-[#0070eb] font-semibold"
-            >
-              Admin Login
+              {loading ? "Logging in..." : "Login"}
             </button>
           </div>
 
           <p className="mt-8 text-center text-lg text-[#414755]">
-            New? <button onClick={() => navigate("/register")} className="text-[#0058bc] font-bold">Register</button>
+            New? <button type="button" onClick={() => navigate("/register")} className="text-[#0058bc] font-bold">Register</button>
           </p>
         </section>
       </div>

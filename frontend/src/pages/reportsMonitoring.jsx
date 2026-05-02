@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ShieldCheck, ClipboardCheck, X } from "lucide-react";
+import { adminService } from "../db/AdminService";
 
 const CARD_SHADOW = "shadow-[0_10px_25px_-10px_rgba(0,0,0,0.1)]";
 
-const REPORTS = [
+const REPORTS_SEED = [
   {
     id: "1",
     name: "Alex Rivers",
@@ -51,6 +52,33 @@ const REPORTS = [
 
 export default function ReportsMonitoring() {
   const navigate = useNavigate();
+  const [reports, setReports] = useState(REPORTS_SEED);
+  const [dismissLabelById, setDismissLabelById] = useState({});
+  const [reviewedIds, setReviewedIds] = useState({});
+
+  const handleDismiss = async (id) => {
+    setDismissLabelById((prev) => ({ ...prev, [id]: "Dismissing..." }));
+    try {
+      await adminService.updateReportStatus(id, "Dismissed");
+      setReports((prev) => prev.filter((r) => r.id !== id));
+    } catch (error) {
+      console.error(error);
+      setDismissLabelById((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    }
+  };
+
+  const handleReview = async (id) => {
+    try {
+      await adminService.updateReportStatus(id, "Reviewed");
+      setReviewedIds((prev) => ({ ...prev, [id]: true }));
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#f9f9ff] flex justify-center shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]">
@@ -98,7 +126,7 @@ export default function ReportsMonitoring() {
         </div>
 
         <section className="mt-8 flex flex-col gap-6">
-          {REPORTS.map((r) => (
+          {reports.map((r) => (
             <article
               key={r.id}
               className={`relative overflow-hidden rounded-lg bg-white p-5 ${CARD_SHADOW} ${
@@ -156,23 +184,25 @@ export default function ReportsMonitoring() {
               <div className="relative mt-4 flex flex-row flex-wrap gap-2 pt-1">
                 <button
                   type="button"
-                  disabled={r.dimmed}
+                  disabled={r.dimmed || reviewedIds[r.id]}
+                  onClick={() => handleReview(r.id)}
                   className={`inline-flex flex-1 min-w-[120px] items-center justify-center gap-2 rounded px-6 py-3 text-xs font-black text-[#0058bc] bg-[#e6e8f3] ${
-                    r.dimmed ? "opacity-50 cursor-not-allowed" : ""
+                    r.dimmed || reviewedIds[r.id] ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                 >
                   <ClipboardCheck size={14} strokeWidth={2.5} />
-                  Review
+                  {reviewedIds[r.id] ? "Under Review ✓" : "Review"}
                 </button>
                 <button
                   type="button"
-                  disabled={r.dimmed}
+                  disabled={r.dimmed || dismissLabelById[r.id]}
+                  onClick={() => handleDismiss(r.id)}
                   className={`relative inline-flex flex-1 min-w-[120px] items-center justify-center gap-2 overflow-hidden rounded bg-[#0058bc] px-6 py-3 text-xs font-black text-white shadow-[0px_4px_6px_-4px_rgba(0,88,188,0.1),0px_10px_15px_-3px_rgba(0,88,188,0.1)] ${
                     r.dimmed ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                 >
                   <X size={14} strokeWidth={2.5} />
-                  Dismiss
+                  {dismissLabelById[r.id] || "Dismiss"}
                 </button>
               </div>
             </article>

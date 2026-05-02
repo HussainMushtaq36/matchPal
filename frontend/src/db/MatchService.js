@@ -17,7 +17,14 @@ class MatchService {
   async recordInteraction(senderId, receiverId, type) {
     const { data, error } = await supabase
       .from('interactions')
-      .insert([{ sender_id: senderId, receiver_id: receiverId, type: type }]);
+      .insert([
+        {
+          sender_id: senderId,
+          receiver_id: receiverId,
+          type,
+          status: 'Pending',
+        },
+      ]);
       
     if (error) throw error;
     return data;
