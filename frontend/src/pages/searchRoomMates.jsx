@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, MapPin, SlidersHorizontal, Heart } from "lucide-react";
+import { ArrowLeft, Search, MapPin, Heart, MessageCircle } from "lucide-react";
 import { authService } from "../db/AuthService";
 import { profileService } from "../db/ProfileService";
 import { matchService } from "../db/MatchService";
-import { supabase } from "../db/supabaseClient";
 
 export default function SearchRoomMates() {
   const navigate = useNavigate();
@@ -13,27 +12,28 @@ export default function SearchRoomMates() {
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState("");
   const [requestState, setRequestState] = useState({});
+  const [acceptedStatusById, setAcceptedStatusById] = useState({});
 
   useEffect(() => {
     const load = async () => {
       try {
         const user = await authService.getCurrentUser();
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .neq("id", user.id)
-          .neq("role", "admin");
-        if (error) throw error;
-        const users = data || [];
+        const users = await matchService.getBrowsableProfiles(user.id);
         const prefs = await profileService.getPreferencesByUserIds(users.map((u) => u.id));
+        const statusMap = await matchService.getInteractionStatusMap(
+          user.id,
+          users.map((u) => u.id)
+        );
         const mappedPrefs = prefs.reduce((acc, pref) => {
           acc[pref.user_id] = pref;
           return acc;
         }, {});
         setAllUsers(users);
         setPreferencesByUserId(mappedPrefs);
+        setAcceptedStatusById(statusMap);
       } catch (error) {
         console.error(error);
+        alert(error.message || "Unable to load roommates.");
       }
     };
     load();
@@ -60,23 +60,19 @@ export default function SearchRoomMates() {
 
   const handleSendRequest = async (targetUserId) => {
     if (requestState[targetUserId]) return;
+    if (acceptedStatusById[targetUserId] === "pending") {
+      alert("Request already sent.");
+      return;
+    }
     setRequestState((prev) => ({ ...prev, [targetUserId]: "processing" }));
     try {
       const user = await authService.getCurrentUser();
-      const exists = await matchService.hasInteraction(user.id, targetUserId, "like");
+      const exists = await matchService.hasInteraction(user.id, targetUserId, "match");
       if (!exists) {
-        await matchService.recordInteraction(user.id, targetUserId, "like");
-        const { error: notifError } = await supabase.from("notifications").insert({
-          user_id: targetUserId,
-          message: "You have a new match request!",
-          is_read: false,
-        });
-        if (notifError) {
-          alert(notifError.message);
-          setRequestState((prev) => ({ ...prev, [targetUserId]: "" }));
-          return;
-        }
+        await matchService.recordInteraction(user.id, targetUserId, "match");
         alert("Match request sent successfully!");
+      } else {
+        alert("An interaction already exists with this user.");
       }
       setRequestState((prev) => ({ ...prev, [targetUserId]: "success" }));
       setTimeout(() => {
@@ -84,6 +80,7 @@ export default function SearchRoomMates() {
       }, 2000);
     } catch (error) {
       console.error(error);
+      alert(error.message || "Unable to send match request.");
       setRequestState((prev) => ({ ...prev, [targetUserId]: "" }));
     }
   };
@@ -162,14 +159,32 @@ export default function SearchRoomMates() {
                   ))}
                 </div>
               </div>
-              <button
-                type="button"
-                disabled={requestState[person.id] === "processing" || requestState[person.id] === "success"}
-                onClick={() => handleSendRequest(person.id)}
-                className="bg-[#f0f7ff] p-3 rounded-2xl text-[#0058bc] hover:bg-[#0058bc] hover:text-white transition-colors disabled:opacity-60"
-              >
-                <Heart size={20} />
-              </button>
+              {acceptedStatusById[person.id] === "accepted" ? (
+                <button
+                  type="button"
+                  onClick={() => navigate("/chat-screen", { state: { profile_id: person.id } })}
+                  className="bg-[#ecfdf5] p-3 rounded-2xl text-[#047857] hover:bg-[#047857] hover:text-white transition-colors"
+                >
+                  <MessageCircle size={20} />
+                </button>
+              ) : acceptedStatusById[person.id] === "pending" ? (
+                <button
+                  type="button"
+                  disabled
+                  className="bg-[#f3f4f6] p-3 rounded-2xl text-[#6b7280] cursor-not-allowed"
+                >
+                  Pending
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={requestState[person.id] === "processing" || requestState[person.id] === "success"}
+                  onClick={() => handleSendRequest(person.id)}
+                  className="bg-[#f0f7ff] p-3 rounded-2xl text-[#0058bc] hover:bg-[#0058bc] hover:text-white transition-colors disabled:opacity-60"
+                >
+                  <Heart size={20} />
+                </button>
+              )}
             </div>
           ))}
         </div>

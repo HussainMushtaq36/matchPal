@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Send } from "lucide-react";
 import { authService } from "../db/AuthService";
-import { chatService } from "../db/ChatService";
+import { messageService } from "../db/MessageService";
 
 const wrapperStyle = {
   maxWidth: "390px",
@@ -16,17 +16,21 @@ const wrapperStyle = {
 export default function ChatScreen() {
   const navigate = useNavigate();
   const location = useLocation();
-  const peerId = location.state?.peerId || "";
+  const peerId = location.state?.profile_id || location.state?.peerId || "";
+  const [currentUserId, setCurrentUserId] = useState("");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
+    let channel = null;
+
     const loadMessages = async () => {
       if (!peerId) return;
       try {
         const user = await authService.getCurrentUser();
-        const rows = await chatService.getMessages(user.id, peerId);
+        setCurrentUserId(user.id);
+        const rows = await messageService.getMessagesBetweenUsers(user.id, peerId);
         setMessages(
           rows.map((m) => ({
             id: m.id,
@@ -34,11 +38,22 @@ export default function ChatScreen() {
             text: m.content,
           }))
         );
+        channel = messageService.subscribeToConversation(user.id, peerId, (row) => {
+          setMessages((prev) => {
+            if (prev.some((item) => item.id === row.id)) return prev;
+            return [...prev, { id: row.id, mine: row.sender_id === user.id, text: row.content }];
+          });
+        });
       } catch (error) {
         console.error(error);
+        alert(error.message || "Unable to load conversation.");
       }
     };
     loadMessages();
+
+    return () => {
+      messageService.unsubscribe(channel);
+    };
   }, [peerId]);
 
   const handleSend = async () => {
@@ -46,12 +61,12 @@ export default function ChatScreen() {
     if (!text || sending || !peerId) return;
     setSending(true);
     try {
-      const user = await authService.getCurrentUser();
-      const inserted = await chatService.sendMessage(user.id, peerId, text);
-      setMessages((prev) => [...prev, { id: inserted.id, mine: true, text: inserted.content }]);
+      const senderId = currentUserId || (await authService.getCurrentUser()).id;
+      await messageService.sendMessage(senderId, peerId, text);
       setDraft("");
     } catch (error) {
       console.error(error);
+      alert(error.message || "Unable to send message.");
     } finally {
       setSending(false);
     }

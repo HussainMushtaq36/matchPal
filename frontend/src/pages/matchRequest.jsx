@@ -18,11 +18,14 @@ export default function MatchRequest() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [actionStateById, setActionStateById] = useState({});
+  const [currentUserName, setCurrentUserName] = useState("A user");
 
   useEffect(() => {
     const load = async () => {
       try {
         const user = await authService.getCurrentUser();
+        const me = await profileService.getProfile(user.id);
+        setCurrentUserName(me?.full_name || "A user");
         const incomingRequests = await matchService.getIncomingRequests(user.id);
         const senderIds = incomingRequests.map((row) => row.sender_id);
         const senderProfiles = await profileService.getProfilesByIds(senderIds);
@@ -48,8 +51,12 @@ export default function MatchRequest() {
     setActionStateById((prev) => ({ ...prev, [row.id]: "processing" }));
     try {
       const user = await authService.getCurrentUser();
-      await matchService.respondToRequest(row.id, row.sender_id, user.id, decision);
-      alert("Match request sent successfully!");
+      await matchService.respondToRequest(row.id, row.sender_id, user.id, decision, currentUserName);
+      if (decision === "accept") {
+        alert("Match Accepted! Visit Messages to start chatting.");
+      } else {
+        alert("Match request rejected.");
+      }
       setActionStateById((prev) => ({
         ...prev,
         [row.id]: decision === "accept" ? "accepted" : "rejected",
@@ -57,6 +64,7 @@ export default function MatchRequest() {
       setRequests((prev) => prev.filter((item) => item.id !== row.id));
     } catch (error) {
       console.error(error);
+      alert(error.message || "Unable to update match request.");
       setActionStateById((prev) => ({ ...prev, [row.id]: "idle" }));
     }
   };
