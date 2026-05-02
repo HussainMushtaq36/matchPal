@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, AlertCircle, LogOut, Activity, BarChart3, LayoutDashboard, UserCircle } from "lucide-react";
+import { adminService } from "../db/AdminService";
 
 // Simplified Tile for high-fidelity feel
 function Tile({ title, onClick, icon: Icon, primary = false }) {
@@ -32,6 +33,19 @@ function StatCard({ label, value, valueColor = "#181c23" }) {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const [pendingMatches, setPendingMatches] = useState(0);
+
+  useEffect(() => {
+    const loadPendingMatches = async () => {
+      try {
+        const count = await adminService.getPendingMatchesCount();
+        setPendingMatches(count);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    loadPendingMatches();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#f9f9ff] flex flex-col items-center py-5 px-4">
@@ -85,7 +99,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-bold text-[#596171] uppercase tracking-widest">Pending Matches</p>
-                  <p className="text-4xl font-black text-[#181c23] mt-1">124</p>
+                  <p className="text-4xl font-black text-[#181c23] mt-1">{pendingMatches}</p>
                 </div>
                 <div className="h-12 w-12 rounded-2xl bg-[#0058bc]/5 flex items-center justify-center">
                   <Activity size={24} className="text-[#0058bc]" />

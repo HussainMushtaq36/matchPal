@@ -7,11 +7,38 @@ import { profileService } from "../db/ProfileService";
 export default function EditProfile() {
   const navigate = useNavigate();
   const [tags, setTags] = useState(["Cleanliness", "Non-Smoker", "Pet Friendly"]);
+  const [newTag, setNewTag] = useState("");
   const [fullName, setFullName] = useState("Alex Rivers");
   const [bio, setBio] = useState(
     "I am a quiet professional working in tech. I enjoy weekend hikes, clean kitchens, and roommate board game nights. Looking for a respectful roommate."
   );
   const [saveLabel, setSaveLabel] = useState("Save");
+  const [avatarUrl, setAvatarUrl] = useState("https://i.pravatar.cc/220?img=12");
+  const [avatarLabel, setAvatarLabel] = useState("");
+
+  const addTag = () => {
+    const cleaned = newTag.trim();
+    if (!cleaned || tags.includes(cleaned)) return;
+    setTags((prev) => [...prev, cleaned]);
+    setNewTag("");
+  };
+
+  const handleMockAvatarUpload = async () => {
+    setAvatarLabel("Saving...");
+    try {
+      const user = await authService.getCurrentUser();
+      const placeholderAvatar = "https://i.pravatar.cc/220?img=65";
+      await profileService.updateProfile(user.id, {
+        avatar_url: placeholderAvatar,
+      });
+      setAvatarUrl(placeholderAvatar);
+      setAvatarLabel("Saved ✓");
+      setTimeout(() => setAvatarLabel(""), 2000);
+    } catch (error) {
+      console.error(error);
+      setAvatarLabel("");
+    }
+  };
 
   const handleSave = async () => {
     setSaveLabel("Saving...");
@@ -21,7 +48,9 @@ export default function EditProfile() {
         full_name: fullName,
         bio,
       });
-      setSaveLabel("Updated ✓");
+      setFullName(fullName);
+      setBio(bio);
+      setSaveLabel("Saved ✓");
       setTimeout(() => setSaveLabel("Save"), 2000);
     } catch (error) {
       console.error(error);
@@ -53,16 +82,23 @@ export default function EditProfile() {
         <div className="flex flex-col items-center mb-8">
           <div className="relative">
             <div className="w-28 h-28 rounded-3xl overflow-hidden bg-gray-200 border-4 border-white shadow-md">
-              <img 
-                src="https://i.pravatar.cc/220?img=12" 
+              <img
+                src={avatarUrl}
                 className="w-full h-full object-cover" 
                 alt="Profile" 
               />
             </div>
-            <button type="button" className="absolute -bottom-2 -right-2 bg-[#0058bc] text-white p-2 rounded-xl shadow-lg border-2 border-white">
+            <button
+              type="button"
+              onClick={handleMockAvatarUpload}
+              className="absolute -bottom-2 -right-2 bg-[#0058bc] text-white p-2 rounded-xl shadow-lg border-2 border-white"
+            >
               <Camera size={18} />
             </button>
           </div>
+          {avatarLabel ? (
+            <p className="mt-2 text-[11px] font-bold text-[#0058bc]">{avatarLabel}</p>
+          ) : null}
           <p className="mt-4 text-[10px] font-black text-[#0058bc] uppercase tracking-widest">Premium Member</p>
         </div>
 
@@ -99,7 +135,26 @@ export default function EditProfile() {
                   <X size={14} className="cursor-pointer" onClick={() => setTags(tags.filter(t => t !== tag))} />
                 </div>
               ))}
-              <button type="button" className="bg-gray-100 text-[#596171] px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border border-dashed border-gray-300">
+            </div>
+            <div className="mt-3 flex gap-2">
+              <input
+                type="text"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addTag();
+                  }
+                }}
+                placeholder="Add a lifestyle tag"
+                className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold text-[#181c23] outline-none"
+              />
+              <button
+                type="button"
+                onClick={addTag}
+                className="bg-gray-100 text-[#596171] px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border border-dashed border-gray-300"
+              >
                 <Plus size={14} /> Add Tag
               </button>
             </div>

@@ -12,7 +12,20 @@ export default function LifePreferences() {
   const [cleanliness, setCleanliness] = useState("Neat freak");
   const [sleepSchedule, setSleepSchedule] = useState("Early bird");
   const [studyHabit, setStudyHabit] = useState(STUDY_OPTIONS[0]);
+  const [tags, setTags] = useState(["Non-Smoker", "Night Owl"]);
+  const [newTag, setNewTag] = useState("");
   const [saveLabel, setSaveLabel] = useState("Save");
+
+  const addTag = () => {
+    const cleaned = newTag.trim();
+    if (!cleaned || tags.includes(cleaned)) return;
+    setTags((prev) => [...prev, cleaned]);
+    setNewTag("");
+  };
+
+  const removeTag = (tag) => {
+    setTags((prev) => prev.filter((t) => t !== tag));
+  };
 
   const handleSave = async () => {
     setSaveLabel("Saving...");
@@ -22,8 +35,9 @@ export default function LifePreferences() {
         sleep_schedule: sleepSchedule,
         study_habit: studyHabit,
         cleanliness_level: cleanliness,
+        tags,
       });
-      setSaveLabel("Updated ✓");
+      setSaveLabel("Saved ✓");
       setTimeout(() => setSaveLabel("Save"), 2000);
     } catch (error) {
       console.error(error);
@@ -117,6 +131,46 @@ export default function LifePreferences() {
                     {tag}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div className="bg-[#f9f9ff] p-5 rounded-3xl border border-gray-50">
+              <div className="flex items-center gap-3 mb-4">
+                <Volume2 className="text-[#0058bc]" size={20} />
+                <h3 className="text-[10px] font-black text-[#596171] uppercase tracking-widest">Tags</h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <span key={tag} className="bg-white text-[#0058bc] border border-[#bfd3f5] px-3 py-1.5 rounded-xl text-xs font-bold">
+                    {tag}
+                    <button type="button" className="ml-2 text-[#596171]" onClick={() => removeTag(tag)}>
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="mt-3 flex gap-2">
+                <input
+                  type="text"
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addTag();
+                    }
+                  }}
+                  placeholder="Add tag"
+                  className="flex-1 bg-white border border-gray-100 rounded-xl px-3 py-2 text-xs font-semibold text-[#181c23] outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={addTag}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-[#0058bc] text-white"
+                >
+                  Add
+                </button>
               </div>
             </div>
           </div>

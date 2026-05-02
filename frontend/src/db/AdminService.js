@@ -30,6 +30,26 @@ class AdminService {
     if (error) throw error;
     return data;
   }
+
+  async deleteUser(userId) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+
+    if (error) throw error;
+    return data;
+  }
+
+  async getPendingMatchesCount() {
+    const { count, error } = await supabase
+      .from('interactions')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'Pending');
+
+    if (error) throw error;
+    return count || 0;
+  }
 }
 
 export const adminService = new AdminService();

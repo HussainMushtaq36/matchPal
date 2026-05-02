@@ -14,34 +14,34 @@ const wrapperStyle = {
 };
 
 const REQUESTS = [
-  { id: "incoming-match-a", name: "Samina", imgIndex: 32 },
-  { id: "incoming-match-b", name: "Rifat", imgIndex: 33 },
-  { id: "incoming-match-c", name: "Mou", imgIndex: 34 },
+  { id: "incoming-match-a", dbId: "770e8400-e29b-41d4-a716-446655447777", name: "Samina", imgIndex: 32 },
+  { id: "incoming-match-b", dbId: "770e8400-e29b-41d4-a716-446655447777", name: "Rifat", imgIndex: 33 },
+  { id: "incoming-match-c", dbId: "770e8400-e29b-41d4-a716-446655447777", name: "Mou", imgIndex: 34 },
 ];
 
 export default function MatchRequest() {
   const navigate = useNavigate();
   const [interactionDone, setInteractionDone] = useState({});
 
-  const handleAccept = async (senderId) => {
+  const handleAccept = async (row) => {
     try {
       const user = await authService.getCurrentUser();
-      await matchService.recordInteraction(user.id, senderId, "accept");
-      setInteractionDone((prev) => ({ ...prev, [senderId]: "accept" }));
+      await matchService.recordInteraction(user.id, row.dbId, "accept");
+      setInteractionDone((prev) => ({ ...prev, [row.id]: "accept" }));
     } catch (error) {
       console.error(error);
-      setInteractionDone((prev) => ({ ...prev, [senderId]: false }));
+      setInteractionDone((prev) => ({ ...prev, [row.id]: false }));
     }
   };
 
-  const handleDecline = async (senderId) => {
+  const handleDecline = async (row) => {
     try {
       const user = await authService.getCurrentUser();
-      await matchService.recordInteraction(user.id, senderId, "decline");
-      setInteractionDone((prev) => ({ ...prev, [senderId]: "decline" }));
+      await matchService.recordInteraction(user.id, row.dbId, "decline");
+      setInteractionDone((prev) => ({ ...prev, [row.id]: "decline" }));
     } catch (error) {
       console.error(error);
-      setInteractionDone((prev) => ({ ...prev, [senderId]: false }));
+      setInteractionDone((prev) => ({ ...prev, [row.id]: false }));
     }
   };
 
@@ -81,20 +81,20 @@ export default function MatchRequest() {
                 <button
                   type="button"
                   disabled={acceptSent || declineSent}
-                  onClick={() => handleAccept(row.id)}
+                  onClick={() => handleAccept(row)}
                   className="flex items-center justify-center gap-3 rounded-lg bg-[#0058bc] px-3 py-2 text-sm font-semibold text-white disabled:bg-[#94a3b8] disabled:cursor-not-allowed"
                 >
                   <Check size={20} style={{ minWidth: "20px" }} />
-                  {acceptSent ? "Request Sent" : "Accept"}
+                  {acceptSent ? "Accepted ✓" : "Accept"}
                 </button>
                 <button
                   type="button"
                   disabled={acceptSent || declineSent}
-                  onClick={() => handleDecline(row.id)}
+                  onClick={() => handleDecline(row)}
                   className="flex items-center justify-center gap-3 rounded-lg border border-[#d1d5db] px-3 py-2 text-sm font-semibold text-[#374151] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <X size={20} style={{ minWidth: "20px" }} />
-                  {declineSent ? "Declined" : "Decline"}
+                  {declineSent ? "Declined ✕" : "Decline"}
                 </button>
               </div>
             </div>

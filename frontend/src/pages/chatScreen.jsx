@@ -14,7 +14,7 @@ const wrapperStyle = {
 };
 
 /** Stand-in peer when no route param is provided */
-const MOCK_PEER_ID = "mock-chat-peer-456";
+const MOCK_PEER_ID = "770e8400-e29b-41d4-a716-446655447777";
 
 export default function ChatScreen() {
   const navigate = useNavigate();
@@ -28,14 +28,16 @@ export default function ChatScreen() {
   const handleSend = async () => {
     const text = draft.trim();
     if (!text || sending) return;
+    const localMessage = { id: `local-${Date.now()}`, mine: true, text };
+    setMessages((prev) => [...prev, localMessage]);
     setDraft("");
     setSending(true);
     try {
       const user = await authService.getCurrentUser();
       await chatService.sendMessage(user.id, MOCK_PEER_ID, text);
-      setMessages((prev) => [...prev, { id: `local-${Date.now()}`, mine: true, text }]);
     } catch (error) {
       console.error(error);
+      setMessages((prev) => prev.filter((m) => m.id !== localMessage.id));
       setDraft(text);
     } finally {
       setSending(false);

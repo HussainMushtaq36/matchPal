@@ -31,7 +31,7 @@ class AuthService {
     // We return a mock "data" object that looks like a real Supabase response
     return {
       user: {
-        id: 'mock-user-123',
+        id: '770e8400-e29b-41d4-a716-446655447777',
         email: resolvedEmail,
         role,
         user_metadata: { full_name: 'Alex Rivers' }
@@ -53,7 +53,7 @@ class AuthService {
   async getCurrentUser() {
     const email = this._lastLoginEmail || 'test@matchpal.com';
     return {
-      id: 'mock-user-123',
+      id: '770e8400-e29b-41d4-a716-446655447777',
       email,
       role: roleFromEmail(email)
     };

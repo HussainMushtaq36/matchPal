@@ -54,13 +54,16 @@ export default function ReportsMonitoring() {
   const navigate = useNavigate();
   const [reports, setReports] = useState(REPORTS_SEED);
   const [dismissLabelById, setDismissLabelById] = useState({});
-  const [reviewedIds, setReviewedIds] = useState({});
+  const [reviewLabelById, setReviewLabelById] = useState({});
 
   const handleDismiss = async (id) => {
     setDismissLabelById((prev) => ({ ...prev, [id]: "Dismissing..." }));
     try {
       await adminService.updateReportStatus(id, "Dismissed");
-      setReports((prev) => prev.filter((r) => r.id !== id));
+      setDismissLabelById((prev) => ({ ...prev, [id]: "Dismissed ✓" }));
+      setReports((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, dimmed: true } : r))
+      );
     } catch (error) {
       console.error(error);
       setDismissLabelById((prev) => {
@@ -72,11 +75,17 @@ export default function ReportsMonitoring() {
   };
 
   const handleReview = async (id) => {
+    setReviewLabelById((prev) => ({ ...prev, [id]: "Reviewing..." }));
     try {
       await adminService.updateReportStatus(id, "Reviewed");
-      setReviewedIds((prev) => ({ ...prev, [id]: true }));
+      setReviewLabelById((prev) => ({ ...prev, [id]: "Under Review ✓" }));
     } catch (error) {
       console.error(error);
+      setReviewLabelById((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
     }
   };
 
@@ -184,14 +193,14 @@ export default function ReportsMonitoring() {
               <div className="relative mt-4 flex flex-row flex-wrap gap-2 pt-1">
                 <button
                   type="button"
-                  disabled={r.dimmed || reviewedIds[r.id]}
+                  disabled={r.dimmed || Boolean(reviewLabelById[r.id])}
                   onClick={() => handleReview(r.id)}
                   className={`inline-flex flex-1 min-w-[120px] items-center justify-center gap-2 rounded px-6 py-3 text-xs font-black text-[#0058bc] bg-[#e6e8f3] ${
-                    r.dimmed || reviewedIds[r.id] ? "opacity-50 cursor-not-allowed" : ""
+                    r.dimmed || reviewLabelById[r.id] ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                 >
                   <ClipboardCheck size={14} strokeWidth={2.5} />
-                  {reviewedIds[r.id] ? "Under Review ✓" : "Review"}
+                  {reviewLabelById[r.id] || "Review"}
                 </button>
                 <button
                   type="button"

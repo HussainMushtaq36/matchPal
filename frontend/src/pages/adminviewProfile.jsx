@@ -26,9 +26,19 @@ export default function AdminViewProfile() {
   const navigate = useNavigate();
   const [tags, setTags] = useState(INITIAL_TAGS);
   const [twoFactor, setTwoFactor] = useState(true);
+  const [resetLabel, setResetLabel] = useState("Reset Password");
+  const [suspendLabel, setSuspendLabel] = useState("Suspend");
 
   const removeTag = (id) =>
     setTags((prev) => prev.filter((t) => t.id !== id));
+
+  const runActionFeedback = (setter, baseLabel) => {
+    setter("Actioning...");
+    setTimeout(() => {
+      setter("Done ✓");
+      setTimeout(() => setter(baseLabel), 2000);
+    }, 900);
+  };
 
   return (
     <div className="min-h-screen bg-[#f9f9ff] flex justify-center">
@@ -220,17 +230,19 @@ export default function AdminViewProfile() {
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
+              onClick={() => runActionFeedback(setResetLabel, "Reset Password")}
               className="flex items-center justify-center gap-2 rounded-lg bg-[#e6e8f3] py-4 text-sm font-black text-[#0058bc]"
             >
               <KeyRound size={18} strokeWidth={2} />
-              Reset Password
+              {resetLabel}
             </button>
             <button
               type="button"
+              onClick={() => runActionFeedback(setSuspendLabel, "Suspend")}
               className="flex items-center justify-center gap-2 rounded-lg bg-[rgba(255,218,214,0.3)] py-4 text-sm font-black text-[#ba1a1a]"
             >
               <Trash2 size={18} strokeWidth={2} />
-              Delete Account
+              {suspendLabel}
             </button>
           </div>
 

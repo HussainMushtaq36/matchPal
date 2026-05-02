@@ -14,23 +14,23 @@ const wrapperStyle = {
 };
 
 const SUGGESTED = [
-  { id: "potential-match-1", name: "Mina Rahman", imgIndex: 21 },
-  { id: "potential-match-2", name: "David Paul", imgIndex: 22 },
-  { id: "potential-match-3", name: "Anika Noor", imgIndex: 23 },
+  { id: "potential-match-1", dbId: "770e8400-e29b-41d4-a716-446655447777", name: "Mina Rahman", imgIndex: 21 },
+  { id: "potential-match-2", dbId: "770e8400-e29b-41d4-a716-446655447777", name: "David Paul", imgIndex: 22 },
+  { id: "potential-match-3", dbId: "770e8400-e29b-41d4-a716-446655447777", name: "Anika Noor", imgIndex: 23 },
 ];
 
 export default function SuggestedMatches() {
   const navigate = useNavigate();
   const [requestSentFor, setRequestSentFor] = useState({});
 
-  const handleSendRequest = async (receiverId) => {
+  const handleSendRequest = async (row) => {
     try {
       const user = await authService.getCurrentUser();
-      await matchService.recordInteraction(user.id, receiverId, "like");
-      setRequestSentFor((prev) => ({ ...prev, [receiverId]: true }));
+      await matchService.recordInteraction(user.id, row.dbId, "like");
+      setRequestSentFor((prev) => ({ ...prev, [row.id]: true }));
     } catch (error) {
       console.error(error);
-      setRequestSentFor((prev) => ({ ...prev, [receiverId]: false }));
+      setRequestSentFor((prev) => ({ ...prev, [row.id]: false }));
     }
   };
 
@@ -70,11 +70,11 @@ export default function SuggestedMatches() {
               <button
                 type="button"
                 disabled={sent}
-                onClick={() => handleSendRequest(row.id)}
+                onClick={() => handleSendRequest(row)}
                 className="mt-3 w-full flex items-center justify-center gap-3 rounded-lg bg-[#0058bc] px-3 py-2 text-sm font-semibold text-white disabled:bg-[#94a3b8] disabled:cursor-not-allowed"
               >
                 <Heart size={20} style={{ minWidth: "20px" }} />
-                {sent ? "Request Sent" : "Send Match Request"}
+                {sent ? "Request Sent ✓" : "Send Match Request"}
               </button>
             </div>
           );

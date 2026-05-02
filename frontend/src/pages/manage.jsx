@@ -44,6 +44,8 @@ export default function ManageStudents() {
   const [query, setQuery] = useState("");
   const [rows, setRows] = useState(initialRows);
   const [updatingId, setUpdatingId] = useState(null);
+  const [statusLabelById, setStatusLabelById] = useState({});
+  const [deletingId, setDeletingId] = useState(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -57,15 +59,47 @@ export default function ManageStudents() {
   const toggleStatus = async (studentId, currentStatus) => {
     const next = currentStatus === "Active" ? "Suspended" : "Active";
     setUpdatingId(studentId);
+    setStatusLabelById((prev) => ({
+      ...prev,
+      [studentId]: next === "Suspended" ? "Suspending..." : "Activating...",
+    }));
     try {
       await adminService.updateUserStatus(studentId, next);
       setRows((prev) =>
         prev.map((r) => (r.id === studentId ? { ...r, accountStatus: next } : r))
       );
+      setStatusLabelById((prev) => ({
+        ...prev,
+        [studentId]: next === "Suspended" ? "Suspended ✓" : "Activated ✓",
+      }));
+      setTimeout(() => {
+        setStatusLabelById((prev) => {
+          const copied = { ...prev };
+          delete copied[studentId];
+          return copied;
+        });
+      }, 2000);
+    } catch (error) {
+      console.error(error);
+      setStatusLabelById((prev) => {
+        const copied = { ...prev };
+        delete copied[studentId];
+        return copied;
+      });
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleDelete = async (studentId) => {
+    setDeletingId(studentId);
+    try {
+      await adminService.deleteUser(studentId);
+      setRows((prev) => prev.filter((r) => r.id !== studentId));
     } catch (error) {
       console.error(error);
     } finally {
-      setUpdatingId(null);
+      setDeletingId(null);
     }
   };
 
@@ -174,22 +208,25 @@ export default function ManageStudents() {
                   onClick={() => toggleStatus(s.id, s.accountStatus)}
                   className="rounded-md border border-[#e0e2ed] bg-white px-3 py-1.5 text-[11px] font-bold text-[#0058bc] disabled:opacity-50"
                 >
-                  {busy ? "Updating..." : active ? "Suspend" : "Activate"}
+                  {statusLabelById[s.id] || (busy ? "Updating..." : active ? "Suspend" : "Activate")}
                 </button>
               </div>
 
               <div className="mt-4 flex flex-row gap-2 pt-2">
                 <button
                   type="button"
+                  onClick={() => navigate(`/admin/profile?userId=${s.id}`)}
                   className="flex-1 rounded-md bg-[#e6e8f3] py-3 text-center text-sm font-bold text-[#0058bc]"
                 >
                   Edit
                 </button>
                 <button
                   type="button"
+                  disabled={deletingId === s.id}
+                  onClick={() => handleDelete(s.id)}
                   className="flex-1 rounded-md border border-transparent bg-white py-3 text-center text-sm font-bold text-[#ba1a1a] ring-1 ring-black/5"
                 >
-                  Delete
+                  {deletingId === s.id ? "Deleting..." : "Delete"}
                 </button>
               </div>
             </article>
