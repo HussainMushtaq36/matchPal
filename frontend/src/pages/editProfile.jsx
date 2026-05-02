@@ -10,7 +10,7 @@ export default function EditProfile() {
   const [newTag, setNewTag] = useState("");
   const [fullName, setFullName] = useState("");
   const [bio, setBio] = useState("");
-  const [saveLabel, setSaveLabel] = useState("Save");
+  const [saveState, setSaveState] = useState("idle");
   const [avatarUrl, setAvatarUrl] = useState("https://i.pravatar.cc/220?img=12");
   const [avatarLabel, setAvatarLabel] = useState("");
 
@@ -54,7 +54,8 @@ export default function EditProfile() {
   };
 
   const handleSave = async () => {
-    setSaveLabel("Processing...");
+    if (saveState === "processing") return;
+    setSaveState("processing");
     try {
       const user = await authService.getCurrentUser();
       await profileService.updateProfile(user.id, {
@@ -63,11 +64,11 @@ export default function EditProfile() {
       });
       setFullName(fullName);
       setBio(bio);
-      setSaveLabel("Success ✓");
-      setTimeout(() => setSaveLabel("Save"), 2000);
+      setSaveState("success");
+      setTimeout(() => setSaveState("idle"), 2000);
     } catch (error) {
       console.error(error);
-      setSaveLabel("Save");
+      setSaveState("idle");
     }
   };
 
@@ -84,10 +85,10 @@ export default function EditProfile() {
           <button 
             type="button"
             onClick={handleSave}
-            disabled={saveLabel === "Saving..."}
+            disabled={saveState === "processing"}
             className="text-[#0058bc] font-bold text-sm disabled:opacity-50 min-w-[4.5rem] text-right"
           >
-            {saveLabel}
+            {saveState === "processing" ? "Saving..." : saveState === "success" ? "Saved ✓" : "Save"}
           </button>
         </div>
 

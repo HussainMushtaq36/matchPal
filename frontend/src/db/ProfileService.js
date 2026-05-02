@@ -53,6 +53,16 @@ class ProfileService {
     if (error) throw error;
     return data || [];
   }
+
+  async getProfilesByIds(userIds) {
+    if (!Array.isArray(userIds) || userIds.length === 0) return [];
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .in('id', userIds);
+    if (error) throw error;
+    return data || [];
+  }
 }
 
 export const profileService = new ProfileService();

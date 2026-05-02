@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Flag } from "lucide-react";
-import { supabase } from "../db/supabaseClient";
 import { authService } from "../db/AuthService";
 import { profileService } from "../db/ProfileService";
+import { moderationService } from "../db/ModerationService";
 
 export default function ReportBlock() {
   const navigate = useNavigate();
@@ -12,10 +12,8 @@ export default function ReportBlock() {
   const [details, setDetails] = useState("");
   const [profiles, setProfiles] = useState([]);
   const [targetId, setTargetId] = useState("");
-  const [reportLabel, setReportLabel] = useState("Report");
-  const [blockLabel, setBlockLabel] = useState("Block");
-  const [reportBusy, setReportBusy] = useState(false);
-  const [blockBusy, setBlockBusy] = useState(false);
+  const [reportState, setReportState] = useState("idle");
+  const [blockState, setBlockState] = useState("idle");
 
   useEffect(() => {
     const loadProfiles = async () => {
@@ -30,56 +28,44 @@ export default function ReportBlock() {
     loadProfiles();
   }, []);
 
-  const withButtonFeedback = (setBusy, setLabel, defaultLabel, successLabel) => {
-    setBusy(true);
-    setLabel("Processing...");
+  const markSuccess = (setState) => {
+    setState("success");
     setTimeout(() => {
-      setLabel(successLabel);
-      setTimeout(() => {
-        setLabel(defaultLabel);
-        setBusy(false);
-      }, 2000);
-    }, 100);
+      setState("idle");
+    }, 2000);
   };
 
   const handleReport = async () => {
-    if (reportBusy || !targetId) return;
+    if (reportState !== "idle" || !targetId) return;
+    setReportState("processing");
     try {
       const user = await authService.getCurrentUser();
-      const { error } = await supabase.from("user_reports").insert([
-        {
-          reporter_id: user.id,
-          target_id: targetId,
-          reason: reason || "unspecified",
-          details: details || null,
-          status: "Pending",
-        },
-      ]);
-      if (error) throw error;
-      withButtonFeedback(setReportBusy, setReportLabel, "Report", "Report Filed ✓");
+      await moderationService.reportUser({
+        reporterId: user.id,
+        targetId,
+        reason,
+        details,
+      });
+      markSuccess(setReportState);
     } catch (error) {
       console.error(error);
-      setReportLabel("Report");
-      setReportBusy(false);
+      setReportState("idle");
     }
   };
 
   const handleBlock = async () => {
-    if (blockBusy || !targetId) return;
+    if (blockState !== "idle" || !targetId) return;
+    setBlockState("processing");
     try {
       const user = await authService.getCurrentUser();
-      const { error } = await supabase.from("blocked_users").insert([
-        {
-          reporter_id: user.id,
-          target_id: targetId,
-        },
-      ]);
-      if (error) throw error;
-      withButtonFeedback(setBlockBusy, setBlockLabel, "Block", "User Blocked ✓");
+      await moderationService.blockUser({
+        reporterId: user.id,
+        targetId,
+      });
+      markSuccess(setBlockState);
     } catch (error) {
       console.error(error);
-      setBlockLabel("Block");
-      setBlockBusy(false);
+      setBlockState("idle");
     }
   };
 
@@ -142,20 +128,28 @@ export default function ReportBlock() {
         <div className="mt-8 grid grid-cols-2 gap-3">
           <button
             type="button"
-            disabled={!targetId || reportBusy || blockBusy}
+            disabled={!targetId || reportState === "processing" || blockState === "processing"}
             onClick={handleReport}
             className="w-full bg-[#0058bc] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-lg shadow-blue-200 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             <Flag size={18} />
-            {reportBusy ? "Processing..." : reportLabel}
+            {reportState === "processing"
+              ? "Reporting..."
+              : reportState === "success"
+              ? "Reported ✓"
+              : "Report User"}
           </button>
           <button
             type="button"
-            disabled={!targetId || reportBusy || blockBusy}
+            disabled={!targetId || reportState === "processing" || blockState === "processing"}
             onClick={handleBlock}
             className="w-full bg-[#e6e8f3] text-[#0058bc] py-4 rounded-2xl font-bold disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {blockBusy ? "Processing..." : blockLabel}
+            {blockState === "processing"
+              ? "Blocking..."
+              : blockState === "success"
+              ? "Blocked ✓"
+              : "Block User"}
           </button>
         </div>
 

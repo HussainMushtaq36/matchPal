@@ -205,7 +205,7 @@ export default function ManageStudents() {
                   onClick={() => navigate(`/admin/view-profile/${s.id}`)}
                   className="flex-1 rounded-md bg-[#e6e8f3] py-3 text-center text-sm font-bold text-[#0058bc]"
                 >
-                  Edit
+                  View Details
                 </button>
                 <button
                   type="button"

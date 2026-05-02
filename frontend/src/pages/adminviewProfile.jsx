@@ -37,6 +37,7 @@ export default function AdminViewProfile() {
             <img src={profile?.avatar_url || "https://i.pravatar.cc/320?img=11"} alt="profile" className="h-full w-full object-cover" />
           </div>
           <div className="min-w-0 flex-1 basis-[200px] space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.1em] text-[#0058bc]">Read-Only Audit View</p>
             <h1 className="text-[36px] leading-[40px] font-black tracking-tight text-[#181c23]">{profile?.full_name || "User"}</h1>
             <div className="flex items-center gap-2 text-base leading-6 text-[#414755]">
               <Hash size={18} className="shrink-0 opacity-70" />

@@ -1,18 +1,11 @@
 import { supabase } from './supabaseClient';
 
-const GOKU_ID = '770e8400-e29b-41d4-a716-446655447777';
-
 function roleFromEmail(email) {
   const normalized = (email || '').trim().toLowerCase();
   return normalized === 'admin@matchpal.com' ? 'admin' : 'user';
 }
 
 class AuthService {
-  constructor() {
-    this._lastLoginEmail = null;
-  }
-
-  // Signs up a new user - Keep this as is for now
   async signUp(email, password) {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -22,45 +15,44 @@ class AuthService {
     return data;
   }
 
-  // BYPASS VERSION: Logs an existing user in without checking Supabase
   async login(email, password) {
-    console.warn("⚠️ AUTH BYPASS ACTIVE: Returning mock user session.");
-
-    const resolvedEmail = email || 'test@matchpal.com';
-    this._lastLoginEmail = resolvedEmail;
-    const role = roleFromEmail(resolvedEmail);
-
-    // We return a mock "data" object that looks like a real Supabase response
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
+    const sessionUser = data?.user || data?.session?.user;
+    if (!sessionUser?.id) {
+      throw new Error('Unable to resolve authenticated user session.');
+    }
     return {
+      ...data,
       user: {
-        id: GOKU_ID,
-        email: resolvedEmail,
-        role,
-        user_metadata: { full_name: 'Goku' }
+        ...sessionUser,
+        role: roleFromEmail(sessionUser.email),
       },
-      session: {
-        access_token: 'fake-token',
-        refresh_token: 'fake-refresh-token'
-      }
     };
   }
 
-  // Logs the user out
   async logout() {
-    // Simply return success
-    return { error: null };
+    return supabase.auth.signOut();
   }
 
-  // If your components check for an active session, add this:
   async getCurrentUser() {
-    const email = this._lastLoginEmail || 'test@matchpal.com';
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+    if (error) throw error;
+    if (!user?.id) {
+      throw new Error('No active authenticated session found.');
+    }
     return {
-      id: GOKU_ID,
-      email,
-      role: roleFromEmail(email)
+      id: user.id,
+      email: user.email || '',
+      role: roleFromEmail(user.email),
     };
   }
 }
 
 export const authService = new AuthService();
-export { GOKU_ID };

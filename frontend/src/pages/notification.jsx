@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Bell } from "lucide-react";
 import { authService } from "../db/AuthService";
-import { supabase } from "../db/supabaseClient";
+import { notificationService } from "../db/NotificationService";
 
 const wrapperStyle = {
   maxWidth: "390px",
@@ -21,13 +21,8 @@ export default function Notification() {
     const loadNotifications = async () => {
       try {
         const user = await authService.getCurrentUser();
-        const { data, error } = await supabase
-          .from("notifications")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
-        if (error) throw error;
-        setItems(data || []);
+        const rows = await notificationService.getNotificationsByUserId(user.id);
+        setItems(rows);
       } catch (error) {
         console.error(error);
       }

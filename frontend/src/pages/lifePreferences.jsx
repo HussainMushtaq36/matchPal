@@ -14,8 +14,7 @@ export default function LifePreferences() {
   const [studyHabit, setStudyHabit] = useState(STUDY_OPTIONS[0]);
   const [tags, setTags] = useState(["Non-Smoker", "Night Owl"]);
   const [newTag, setNewTag] = useState("");
-  const [saveLabel, setSaveLabel] = useState("Save");
-  const [saving, setSaving] = useState(false);
+  const [saveState, setSaveState] = useState("idle");
 
   useEffect(() => {
     const loadPreferences = async () => {
@@ -47,8 +46,8 @@ export default function LifePreferences() {
   };
 
   const handleSave = async () => {
-    setSaving(true);
-    setSaveLabel("Processing...");
+    if (saveState === "processing") return;
+    setSaveState("processing");
     try {
       const user = await authService.getCurrentUser();
       await profileService.updatePreferences(user.id, {
@@ -57,13 +56,11 @@ export default function LifePreferences() {
         cleanliness_level: cleanliness,
         tags,
       });
-      setSaveLabel("Saved ✓");
-      setTimeout(() => setSaveLabel("Save"), 2000);
+      setSaveState("success");
+      setTimeout(() => setSaveState("idle"), 2000);
     } catch (error) {
       console.error(error);
-      setSaveLabel("Save");
-    } finally {
-      setSaving(false);
+      setSaveState("idle");
     }
   };
 
@@ -80,10 +77,10 @@ export default function LifePreferences() {
           <button
             type="button"
             onClick={handleSave}
-            disabled={saving}
+            disabled={saveState === "processing"}
             className="bg-[#0058bc] text-white px-5 py-2 rounded-xl text-xs font-bold disabled:opacity-50 min-w-[5rem]"
           >
-            {saveLabel}
+            {saveState === "processing" ? "Saving..." : saveState === "success" ? "Saved ✓" : "Save"}
           </button>
         </div>
 
