@@ -49,6 +49,17 @@ export default function SuggestedMatches() {
       const exists = await matchService.hasInteraction(user.id, row.id, "like");
       if (!exists) {
         await matchService.recordInteraction(user.id, row.id, "like");
+        const { error: notifError } = await supabase.from("notifications").insert({
+          user_id: row.id,
+          message: "You have a new match request!",
+          is_read: false,
+        });
+        if (notifError) {
+          alert(notifError.message);
+          setRequestSentFor((prev) => ({ ...prev, [row.id]: "" }));
+          return;
+        }
+        alert("Match request sent successfully!");
       }
       setRequestSentFor((prev) => ({ ...prev, [row.id]: "success" }));
       setTimeout(() => setRequestSentFor((prev) => ({ ...prev, [row.id]: "" })), 2000);

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Flag } from "lucide-react";
 import { authService } from "../db/AuthService";
 import { profileService } from "../db/ProfileService";
-import { moderationService } from "../db/ModerationService";
+import { supabase } from "../db/supabaseClient";
 
 export default function ReportBlock() {
   const navigate = useNavigate();
@@ -41,18 +41,28 @@ export default function ReportBlock() {
     if (reportState !== "idle" || !targetId || isAdminTarget) return;
     setReportState("processing");
     try {
-      const user = await authService.getCurrentUser();
-      await moderationService.reportUser({
-        reporterId: user.id,
-        targetId,
-        reason,
-        details,
+      const currentUser = await authService.getCurrentUser();
+      const targetUser = profiles.find((profile) => profile.id === targetId);
+      if (!targetUser?.id) {
+        throw new Error("Please select a valid user.");
+      }
+      const reportReason = reason || "unspecified";
+      const { error } = await supabase.from("user_reports").insert({
+        reporter_id: currentUser.id,
+        reported_id: targetUser.id,
+        reason: reportReason,
       });
+      if (error) {
+        alert(error.message);
+        setReportState("idle");
+        return;
+      }
       markSuccess(setReportState);
-      alert("Action completed successfully");
+      alert("Action completed successfully!");
       navigate("/user-dashboard");
     } catch (error) {
       console.error(error);
+      alert(error.message || "Unable to complete report.");
       setReportState("idle");
     }
   };
@@ -61,16 +71,26 @@ export default function ReportBlock() {
     if (blockState !== "idle" || !targetId || isAdminTarget) return;
     setBlockState("processing");
     try {
-      const user = await authService.getCurrentUser();
-      await moderationService.blockUser({
-        reporterId: user.id,
-        targetId,
+      const currentUser = await authService.getCurrentUser();
+      const targetUser = profiles.find((profile) => profile.id === targetId);
+      if (!targetUser?.id) {
+        throw new Error("Please select a valid user.");
+      }
+      const { error } = await supabase.from("user_blocks").insert({
+        blocker_id: currentUser.id,
+        blocked_id: targetUser.id,
       });
+      if (error) {
+        alert(error.message);
+        setBlockState("idle");
+        return;
+      }
       markSuccess(setBlockState);
-      alert("Action completed successfully");
+      alert("Action completed successfully!");
       navigate("/user-dashboard");
     } catch (error) {
       console.error(error);
+      alert(error.message || "Unable to complete block.");
       setBlockState("idle");
     }
   };

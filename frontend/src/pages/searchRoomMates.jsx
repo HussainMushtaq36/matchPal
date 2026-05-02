@@ -66,6 +66,17 @@ export default function SearchRoomMates() {
       const exists = await matchService.hasInteraction(user.id, targetUserId, "like");
       if (!exists) {
         await matchService.recordInteraction(user.id, targetUserId, "like");
+        const { error: notifError } = await supabase.from("notifications").insert({
+          user_id: targetUserId,
+          message: "You have a new match request!",
+          is_read: false,
+        });
+        if (notifError) {
+          alert(notifError.message);
+          setRequestState((prev) => ({ ...prev, [targetUserId]: "" }));
+          return;
+        }
+        alert("Match request sent successfully!");
       }
       setRequestState((prev) => ({ ...prev, [targetUserId]: "success" }));
       setTimeout(() => {
