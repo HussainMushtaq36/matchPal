@@ -47,7 +47,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f9f9ff] flex items-center justify-center p-4">
+    <div className="w-[390px] h-[844px] mx-auto overflow-x-hidden overflow-y-auto relative border border-gray-200 shadow-xl min-h-screen bg-[#f9f9ff] flex items-center justify-center p-4">
       {/* iPhone 14 Width is roughly 390px */}
       <div className="w-full max-w-[390px] overflow-hidden rounded-3xl bg-white shadow-2xl">
         <section className="bg-[#c9d3e1]/60 px-8 pb-11 pt-12 text-center">

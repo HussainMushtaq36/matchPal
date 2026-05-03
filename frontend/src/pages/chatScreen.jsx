@@ -77,7 +77,7 @@ export default function ChatScreen() {
   };
 
   return (
-    <div style={wrapperStyle} className="px-4 pb-4 pt-5">
+    <div style={wrapperStyle} className="w-[390px] h-[844px] mx-auto overflow-x-hidden overflow-y-auto relative border border-gray-200 shadow-xl px-4 pb-4 pt-5">
       <button type="button" onClick={() => navigate("/user-dashboard")} className="flex items-center justify-center gap-3 self-start text-[#0058bc]">
         <ArrowLeft size={20} style={{ minWidth: "20px" }} />
         <span className="font-semibold">Back</span>

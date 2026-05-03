@@ -60,7 +60,7 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f9f9ff] flex flex-col items-center py-5 px-4">
+    <div className="w-[390px] h-[844px] mx-auto overflow-x-hidden overflow-y-auto relative border border-gray-200 shadow-xl min-h-screen bg-[#f9f9ff] flex flex-col items-center py-5 px-4">
       <div className="w-full max-w-[390px] bg-[#f9f9ff] rounded-[40px] shadow-2xl overflow-hidden flex flex-col relative min-h-[800px]">
         
         {/* Header */}

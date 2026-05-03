@@ -130,7 +130,7 @@ export default function UserDashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f9f9ff] px-3 py-5" style={{ maxWidth: "390px", margin: "0 auto", minHeight: "100vh" }}>
+    <div className="w-[390px] h-[844px] mx-auto overflow-x-hidden overflow-y-auto relative border border-gray-200 shadow-xl min-h-screen bg-[#f9f9ff] px-3 py-5" style={{ maxWidth: "390px", margin: "0 auto", minHeight: "100vh" }}>
       <div className="relative mx-auto w-full max-w-[390px] overflow-hidden bg-[#f9f9ff] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between bg-[rgba(249,249,255,0.8)] px-6 backdrop-blur-[12px]">
           <div className="flex items-center gap-3">

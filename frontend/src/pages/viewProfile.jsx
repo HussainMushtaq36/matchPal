@@ -24,7 +24,7 @@ export default function ViewProfile() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f9f9ff] flex flex-col items-center py-5 px-4">
+    <div className="w-[390px] h-[844px] mx-auto overflow-x-hidden overflow-y-auto relative border border-gray-200 shadow-xl min-h-screen bg-[#f9f9ff] flex flex-col items-center py-5 px-4">
       <div className="w-full max-w-[390px] bg-white rounded-[40px] shadow-xl overflow-hidden flex flex-col">
         <div className="px-6 pt-6 pb-4 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-10">
           <button onClick={() => navigate(-1)} className="p-2 bg-[#f3f4f6] rounded-full text-[#181c23]">

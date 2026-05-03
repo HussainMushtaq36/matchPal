@@ -11,7 +11,7 @@ export default function HomePage() {
 
   return (
     <div
-      className="min-h-screen bg-[#f9f9ff] px-3 py-5"
+      className="w-[390px] h-[844px] mx-auto overflow-x-hidden overflow-y-auto relative border border-gray-200 shadow-xl min-h-screen bg-[#f9f9ff] px-3 py-5"
       style={{ maxWidth: "390px", margin: "0 auto", minHeight: "100vh" }}
     >
       <div className="mx-auto w-full max-w-[390px] overflow-hidden rounded-3xl bg-[#f9f9ff] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]">

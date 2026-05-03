@@ -96,7 +96,7 @@ export default function ReportBlock() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f9f9ff] flex flex-col items-center py-5 px-4">
+    <div className="w-[390px] h-[844px] mx-auto overflow-x-hidden overflow-y-auto relative border border-gray-200 shadow-xl min-h-screen bg-[#f9f9ff] flex flex-col items-center py-5 px-4">
       <div className="w-full max-w-[390px] bg-white rounded-[40px] shadow-xl overflow-hidden flex flex-col p-6">
         
         {/* Header */}

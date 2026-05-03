@@ -25,7 +25,7 @@ export default function AdminViewProfile() {
   }, [userId]);
 
   return (
-    <div className="min-h-screen bg-[#f9f9ff] flex justify-center">
+    <div className="w-[390px] h-[844px] mx-auto overflow-x-hidden overflow-y-auto relative border border-gray-200 shadow-xl min-h-screen bg-[#f9f9ff] flex justify-center">
       <div className="w-full max-w-[390px] mx-auto min-h-screen px-6 pb-20 pt-14">
         <button type="button" onClick={() => navigate("/admin-dashboard")} className="mb-8 flex items-center gap-1 text-sm font-bold text-[#414755] active:opacity-70">
           <ChevronLeft size={22} strokeWidth={2.5} className="text-[#181c23]" />

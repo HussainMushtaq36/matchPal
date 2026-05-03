@@ -30,7 +30,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f9f9ff] flex items-center justify-center p-4">
+    <div className="w-[390px] h-[844px] mx-auto overflow-x-hidden overflow-y-auto relative border border-gray-200 shadow-xl min-h-screen bg-[#f9f9ff] flex items-center justify-center p-4">
       <div className="w-full max-w-[390px] rounded-3xl bg-white p-6 shadow-2xl">
         <div className="mb-6 flex items-center gap-3">
           <img src={logoIcon} alt="MatchPal logo" className="h-10 w-10" />
